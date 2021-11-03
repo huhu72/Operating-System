@@ -35,11 +35,7 @@ public class CPU {
 		ArrayList<Command> commands;
 
 		while (!dispatcher.getReadyQueue().isEmpty() || !dispatcher.getWaitingQueue().isEmpty()) {
-
-			// Only works for running processes one at a time. Logic Process 1 gets to the
-			// I/O command
-			// Process 1 -> waiting queue. The waiting queue is no longer empty so it will
-			// pull the process from there
+			
 			if (dispatcher.getWaitingQueue().isEmpty())
 				process = dispatcher.getProcess();
 			else
@@ -69,6 +65,7 @@ public class CPU {
 				}
 				
 			};
+			t.scheduleAtFixedRate(tt, 10000, 10000);
 		//System.out.println("Running " + process.getProcessName());
 			while (pcb.programCounter.getCounter() <= process.getCommands().size()) {
 				// for (int i = pcb.programCounter.getCounter(); i <= commands.size(); i++) {
@@ -95,7 +92,7 @@ public class CPU {
 					}
 				}
 				
-				// If the process has ran all the commands, add it to the terminated list
+
 				if (pcb.programCounter.getCounter() > commands.size()) {
 					pcb.setState(STATE.EXIT);
 					pcbList.put(pcb.getProcessPID(), pcb);
@@ -150,8 +147,7 @@ public class CPU {
 
 	public void print() {
 		System.out.println("All processes:");
-		while (!processes.isEmpty()) {
-			Process p = processes.poll();
+		for(Process p : processes) {
 			double percentage = (((double) pcbList.get(p.getPID()).programCounter.getCounter() - 1)
 					/ p.getCommands().size()) * 100;
 			System.out.println(p.getProcessName() + " " + percentage + "% completed");

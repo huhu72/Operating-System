@@ -55,17 +55,13 @@ public class Scheduler{
 
 			@Override
 			public void run() {
-				if(Boolean.TRUE.equals(quantumStatus)) {
-					quantumStatus = false;
-				}else {
-					quantumStatus = true;
-				}
-				
+				quantumStatus = true;
+				timer.cancel();
 			}
 			
 		};
 		timer.schedule(tt, 4);
-		timer.cancel();
+		
 		
 		
 	}

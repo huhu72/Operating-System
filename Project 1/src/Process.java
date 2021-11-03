@@ -88,33 +88,7 @@ public class Process {
 				createProcesses(arguments[i] + ".txt", Long.parseLong(arguments[i+1]));
 				
 			}
-		}
-		/*while (createProcess.equals("YES")) {
-			System.out.println("\nPlease pick a template and how many processes you would like to create");
-			System.out.print("EX: <template name> <number of processes>:");
-			templateName = input.next() + ".txt";
-			try {
-				numProcessInput = input.nextInt();
-			} catch (Exception e) {
-				System.out.println("ERROR:PLEASE ENTER A NUMBER FOR HOW MANY PROCESSES YOU WOULD LIKE TO MAKE!");
-				createProcessesPrompt();
-			}
-			createProcesses(numProcessInput, templateName);
-			System.out.print("Would you like to create more processes?: ");
-			createProcess = input.next();
-			createProcess = createProcess.toUpperCase();
-			if(createProcess.equals("NO")) {
-				input.close();
-				//runProcesses();
-			}
-		}
-		/*for(Process p : this.processes) {
-			System.out.println(p.processName);
-			for(Command c : p.processCommands) {
-				System.out.println(c.toString());
-			}
-		}*/
-		
+		}	
 
 	}
 	private void showHelp() throws FileNotFoundException {
