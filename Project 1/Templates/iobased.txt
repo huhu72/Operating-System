@@ -1,0 +1,8 @@
+I/O 5 25
+I/O 2 20
+I/O 1 10
+C*
+CALCULATE 5 10
+Cn
+I/O 50 70
+I/O 1 200

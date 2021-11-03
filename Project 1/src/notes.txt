@@ -1,0 +1,10 @@
+scheduler measures the the q and tells dispatcher to remove it from the cpu.
+
+calculate avg run time for 4 processes containing just calculate command and the divide it by 4-8(
+to calculate a good quantum time)
+Critical section- process should check for wait() or signal();
+
+Things printed:
+process names
+state
+percentage of completion out of all commands.

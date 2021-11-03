@@ -1,0 +1,10 @@
+CALCULATE 5 100
+CALCULATE 25 50
+I/O 10 20
+CALCULATE 5 20
+C*
+Calculate 1 10
+Cn
+I/O 15 25
+
+^Critical section template
