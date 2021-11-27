@@ -1,8 +1,10 @@
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
+
 
 
 public class Scheduler{
@@ -11,6 +13,8 @@ public class Scheduler{
 	private Queue<Process> readyQueue;
 	private Queue<Process> waitingQueue;
 	public Boolean quantumStatus = true;
+	public Queue<Process>semaphoreWaitingQueue = new LinkedList<Process>();
+	Timer timer;
 		
 	Scheduler(){
 		this.readyQueue = new PriorityQueue<>((p1,p2)->{
@@ -49,13 +53,15 @@ public class Scheduler{
 		return this.quantumStatus;
 	}
 	public void startQuantumClock() {
+		System.out.println("Starting a new timer");
 		quantumStatus = true;
-		Timer timer = new Timer();
+		timer = new Timer();
 		TimerTask tt = new TimerTask() {
 
 			@Override
 			public void run() {
-				quantumStatus = true;
+				System.out.println("Timer has been destroyed");
+				quantumStatus = false;
 				timer.cancel();
 			}
 			
@@ -64,6 +70,16 @@ public class Scheduler{
 		
 		
 		
+	}
+	public void killQuantumTimer() {
+		timer.cancel();
+		System.out.println("Timer has been terminated");
+	}
+	public void addToSemaphoreQueue(Process p) {
+		this.semaphoreWaitingQueue.add(p);
+		PCB pcb = pcbInfo.get(p.getPID());
+		pcb.setState(STATE.WAIT);
+		pcbInfo.put(p.getPID(), pcb);
 	}
 
 }

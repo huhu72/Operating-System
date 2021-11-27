@@ -52,9 +52,8 @@ public class Dispatcher {
 	}
 
 	public Process getProcess() {
-		Process processReturn = this.readyQueue.poll();
+		return this.readyQueue.poll();
 		//System.out.println(processReturn.getProcessName() + " is being sent to the cpu to run");
-		return processReturn;
 	}
 
 	public void addToWaitingQueue(Process process, PCB pcb) {

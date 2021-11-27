@@ -112,10 +112,10 @@ public class Process {
 				//This will represent the index number since processes are held in arraylists 
 				//so the current line number will be critStart +1.
 				//Same logic applies to critEnd
-				this.critStart = this.processCommands.size();
+				this.critStart = this.processCommands.size() + 1;
 				command = file.next();
 			}else if(command.equals("Cn")) {
-				this.critEnd = this.processCommands.size();
+				this.critEnd = this.processCommands.size() + 1;
 				command = file.next();
 			}
 			low = file.nextInt();
