@@ -1,13 +1,11 @@
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+
 import java.io.FileNotFoundException;
-import java.util.Set;
+
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.swing.JFrame;
 
-public class OS extends JFrame implements ActionListener {
+public class OS{
 	static boolean status = false;
 	static Dispatcher dispatcher = new Dispatcher();
 	static CPU cpu = new CPU();
@@ -28,6 +26,8 @@ public class OS extends JFrame implements ActionListener {
 			}
 
 		};
+		S.setScheduler(scheduler);
+		S.setCPU(cpu);
 		cpu.setDispatcher(dispatcher);
 		cpu.S = S;
 		cpu.setScheduler(scheduler);
@@ -54,11 +54,6 @@ public class OS extends JFrame implements ActionListener {
 
 	}
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
 
 	/*
 	 * public void runCommand() { Process process; PCB pcb; ArrayList<Command>

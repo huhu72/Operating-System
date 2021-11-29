@@ -68,21 +68,19 @@ public class Scheduler{
 		};
 		timer.schedule(tt, 4);
 		
-		
-		
 	}
 	public void killQuantumTimer() {
 		timer.cancel();
 		System.out.println("Timer has been terminated");
 	}
-	public void addToSemaphoreQueue(Process p) {
-		this.semaphoreWaitingQueue.add(p);
-		PCB pcb = pcbInfo.get(p.getPID());
-		pcb.setState(STATE.WAIT);
-		pcbInfo.put(p.getPID(), pcb);
+
+	public Queue<Process> sortSemaphoreWaitingQueue(Queue<Process> list) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
+//TODO: Re-formated semaphore logic but need to implement the sorting of the list
 /*
 new Comparator<Process>() {
 

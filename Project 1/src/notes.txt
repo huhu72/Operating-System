@@ -8,3 +8,14 @@ Things printed:
 process names
 state
 percentage of completion out of all commands.
+
+
+
+
+
+Get rid of quantum during CS 
+When comparing scheduler, see how many processes run within a minute and use the fastest one
+Deterministic-Fork in template
+Prob-Fork call randomly
+child can run any template, can create template to run one or two commands. Need to have cascading
+for interrupt, put process to sleep and then resume the same process. randomly

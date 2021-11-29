@@ -29,6 +29,7 @@ public class CPU extends Thread {
 	// When process is recieved from dispatcher, remove its PCB and itself from the
 	// jobQueue and pcblist
 	public void run() {
+		Boolean inCS = false;
 		Process process;
 		PCB pcb;
 		ArrayList<Command> commands;
@@ -56,11 +57,12 @@ public class CPU extends Thread {
 				System.out.println("Reached the Critical section" + "CS: " + CS + "Program Counter: "
 						+ pcb.programCounter.getCounter());
 				System.out.println("S value before wait is called " + S.value);
-				this.wait(S, process);
-				System.out.println("               S value is now " + S.value );
-				if(S.value < 0) {
+				S.wait(process);
+				System.out.println("               S value is now " + S.value);
+				if (S.value < 0) {
 					continue;
-				}
+				} else if (S.value > 0)
+					inCS = true;
 			}
 			if (commands.get(0).command.equals("I/O") && pcb.programCounter.getCounter() == 1) {
 				// System.out.println(process.getProcessName() + " has been sent to the waiting
@@ -82,8 +84,8 @@ public class CPU extends Thread {
 				}
 
 			};
-			t.scheduleAtFixedRate(tt, 10000, 10000);
-			 System.out.println("Running " + process.getProcessName());
+			if(!inCS)t.scheduleAtFixedRate(tt, 10000, 10000);
+			System.out.println("Running " + process.getProcessName());
 			while (pcb.programCounter.getCounter() <= process.getCommands().size()) {
 				// for (int i = pcb.programCounter.getCounter(); i <= commands.size(); i++) {
 
@@ -111,10 +113,11 @@ public class CPU extends Thread {
 				}
 				if (pcb.programCounter.getCounter() == CE) {
 					System.out.println("S value before signal is called " + S.value);
-					signal(S);
-					System.out.println("               S value is now " + S.value );
-					System.out.println(process.getProcessName() + " has reached the end of the critical section" + "CE: " + CE
-							+ "Program Counter: " + pcb.programCounter.getCounter());
+					S.signal();
+					inCS = false;
+					System.out.println("               S value is now " + S.value);
+					System.out.println(process.getProcessName() + " has reached the end of the critical section"
+							+ "CE: " + CE + "Program Counter: " + pcb.programCounter.getCounter());
 				}
 				if (pcb.programCounter.getCounter() > commands.size()) {
 					pcb.setState(STATE.EXIT);
@@ -221,42 +224,12 @@ public class CPU extends Thread {
 		this.scheduler = s;
 	}
 
-	// Semaphore methods
-	// S is the semaphore the process has, P is the process thats calling this
-	// method
-	private synchronized void wait(Semaphore S, Process P) {
-		
-		if (S.value == 0) {
-			S.list.add(P);
-			block(P);
-			System.out.println(P.getProcessName() + "has been sent to the semaphore waiting queue since S < 0");
-		}
-		S.value = 0;
+	public void setPCBList(HashMap<Long, PCB> pcbList) {
+		this.pcbList = pcbList;
 	}
 
-	private synchronized void signal(Semaphore S) {
-		
-		if (S.value == 0) {
-			S.value = 1;
-			Process P = S.list.get(0);
-			S.list.remove(0);
-			wakeUp(P);
-			System.out.println(P.getProcessName() + "has been put back into the ready queue");
-		}
-	}
-
-	private void wakeUp(Process P) {
-		PCB pcb = pcbList.get(P.getPID());
-		pcb.setState(STATE.READY);
-		pcbList.put(P.getPID(), pcb);
-		scheduler.addToPQ(scheduler.semaphoreWaitingQueue.remove());
-	}
-
-	private void block(Process p) {
-		scheduler.addToSemaphoreQueue(p);
-		PCB pcb = pcbList.get(p.getPID());
-		pcb.setState(STATE.WAIT);
-		pcbList.put(p.getPID(), pcb);
+	public void updatePCBList(PCB pcb) {
+		this.pcbList.put(pcb.getProcessPID(), pcb);
 	}
 
 }
