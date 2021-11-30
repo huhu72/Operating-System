@@ -26,7 +26,7 @@ public class Semaphore {
 		if (this.value < 0) {
 			this.list.add(P);
 			block(P);
-			System.out.println(P.getProcessName() + "has been sent to the semaphore waiting queue since S < 0");
+			//System.out.println(P.getProcessName() + "has been sent to the semaphore waiting queue since S < 0");
 		}
 	}
 
@@ -36,7 +36,7 @@ public class Semaphore {
 			this.value = 1;
 			Process P = this.list.poll();
 			wakeUp(P);
-			System.out.println(P.getProcessName() + "has been put back into the ready queue");
+			//System.out.println(P.getProcessName() + "has been put back into the ready queue");
 		}
 	}
 
@@ -52,5 +52,12 @@ public class Semaphore {
 		PCB pcb = cpu.getPCB(p.getPID());
 		pcb.setState(STATE.WAIT);
 		cpu.updatePCBList(pcb);
+	}
+	public void print() {
+		System.out.println("All processes:");
+		for (Process p : this.list) {
+			System.out.println(p.getProcessName() + " Priority: " + p.priority);
+
+		}
 	}
 }

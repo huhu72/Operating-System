@@ -44,9 +44,10 @@ public class OS{
 		dispatcher.setCPU(cpu);
 		dispatcher.setPCBList(cpu.getPCBList());
 		dispatcher.setReadyQueue(cpu.getJobQueue());
-		timer.scheduleAtFixedRate(tt, 10, 4000);
-		//cpu.runCommand();
+		//timer.scheduleAtFixedRate(tt, 10, 4000);
+	
 		cpu.start();
+		cpu.interrupt();
 	
 		/*
 		 * for(Process p1 : dispatcher.getReadyQueue()) { System.out.println(p1); }

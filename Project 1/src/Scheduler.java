@@ -53,7 +53,7 @@ public class Scheduler{
 		return this.quantumStatus;
 	}
 	public void startQuantumClock() {
-		System.out.println("Starting a new timer");
+//		System.out.println("Starting a new timer");
 		quantumStatus = true;
 		timer = new Timer();
 		TimerTask tt = new TimerTask() {
@@ -71,12 +71,15 @@ public class Scheduler{
 	}
 	public void killQuantumTimer() {
 		timer.cancel();
-		System.out.println("Timer has been terminated");
+		//System.out.println("Timer has been terminated");
 	}
 
 	public Queue<Process> sortSemaphoreWaitingQueue(Queue<Process> list) {
-		// TODO Auto-generated method stub
-		return null;
+		Queue<Process> sortedList = new PriorityQueue<>((p1,p2)->{
+			return pcbInfo.get(p2.getPID()).getPriority() - pcbInfo.get(p1.getPID()).getPriority();
+		});
+		sortedList.addAll(list);
+		return sortedList;
 	}
 
 }

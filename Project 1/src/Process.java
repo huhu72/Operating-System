@@ -67,6 +67,10 @@ public class Process {
 		}
 	}*/
 
+	public Process() {
+		// TODO Auto-generated constructor stub
+	}
+
 	public void createProcessesPrompt() throws FileNotFoundException {
 		Scanner input = new Scanner(System.in);
 		String command;
