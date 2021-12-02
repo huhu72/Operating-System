@@ -13,9 +13,9 @@ percentage of completion out of all commands.
 
 
 
-Get rid of quantum during CS 
+Get rid of quantum during CS -done
 When comparing scheduler, see how many processes run within a minute and use the fastest one
-Deterministic-Fork in template
-Prob-Fork call randomly
-child can run any template, can create template to run one or two commands. Need to have cascading
+Deterministic-Fork in template-done
+Prob-Fork call randomly-done
+child can run any template, can create template to run one or two commands. Need to have cascading-done
 for interrupt, put process to sleep and then resume the same process. randomly

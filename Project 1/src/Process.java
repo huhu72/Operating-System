@@ -43,6 +43,8 @@ public class Process {
 	public int timeLimit;
 	public int priority;
 	private int pidCounter = 0;
+	private long childPID;
+	private long parentPID;
 	Process(CPU cpu){
 		this.cpu = cpu;
 	}
@@ -135,19 +137,38 @@ public class Process {
 	public void createProcesses(String templateName, long numProcessInput) throws FileNotFoundException {
 		//String templateLocation = "./Templates/" + templateName; 
 		Process process;
+		int min = 1;
+		int max = 10;
+		int randomNum = (int) Math.floor(Math.random()*(max-min+1)+min);
 		this.pid = 1;
 		for (int i = 0; i < numProcessInput; i++) {
 			createCommands(templateName);
 			process = new Process("Process" + processCreationCounter,getCommands(), (this.pid + this.pidCounter), this.critStart, this.critEnd);
 			this.pidCounter++;
 			this.processCreationCounter++;
-			//pcb = new PCB(process, this.cpu);
+			if(randomNum == 1) {
+				Process childProcess = fork();
+				process.setChildPID(childProcess.getPID());
+			}
 			this.cpu.addToProcessQueue(process);
-			this.cpu.addPCB(new PCB(process));
-			//System.out.println(this.pid);
-	
+			PCB pcb = new PCB(process);
+			pcb.setChildPID(process.childPID);
+			this.cpu.addPCB(pcb);
+			
 		}
 		
+	}
+	public Process fork() throws FileNotFoundException {
+		createCommands("child.txt");
+		Process childProcess = new Process("Process" + processCreationCounter,getCommands(), (this.pid + this.pidCounter), this.critStart, this.critEnd);
+		childProcess.setParentPID(this.getPID());
+		this.pidCounter++;
+		this.processCreationCounter++;
+		this.cpu.addToProcessQueue(childProcess);
+		PCB childPCB = new PCB(childProcess);
+		childPCB.setParentPID(childProcess.getParentPID());
+		this.cpu.addPCB(childPCB);
+		return childProcess;
 	}
 
 	public ArrayList<Command> getCommands() {
@@ -188,10 +209,25 @@ public class Process {
 	public String getProcessName(){
 		return this.processName;
 	}
+	
+	public long getChildPID() {
+		return this.childPID;
+	}
+	public void setChildPID(long childPID) {
+		 this.childPID = childPID;
+	}
+
+	public long getParentPID() {
+		return this.parentPID;
+	}
+
+	public void setParentPID(long parentPID) {
+		this.parentPID = parentPID;
+	}
 
 	@Override
 	   public String toString() {
-	        return ("Process Name: "+this.processName + "\nProcess PID: " + this.pid + "\n Priority: " + this.priority);
+	        return ("\nProcess Name: "+this.processName + "\nProcess PID: " + this.pid + "\nPriority: " + this.priority + "\n     Child PID: " + this.childPID + "\n     Parent PID: " + this.parentPID);
 	   }
 	/*	private void runProcesses(){
 	File[] processes = new File("./Processes/").listFiles();

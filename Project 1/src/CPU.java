@@ -35,7 +35,6 @@ public class CPU extends Thread {
 		ArrayList<Command> commands;
 		int CS;
 		int CE;
-
 		while (!dispatcher.getReadyQueue().isEmpty() || !dispatcher.getWaitingQueue().isEmpty() || !S.list.isEmpty()) {
 			if (inCS == false) {
 				if (dispatcher.getWaitingQueue().isEmpty()) {
@@ -123,6 +122,10 @@ public class CPU extends Thread {
 				if (pcb.programCounter.getCounter() > commands.size()) {
 					pcb.setState(STATE.EXIT);
 					pcbList.put(pcb.getProcessPID(), pcb);
+					PCB childPCB = pcbList.get(pcb.getChildPID());
+					childPCB.programCounter.setCounter(3);
+					childPCB.setState(STATE.EXIT);
+					pcbList.put(childPCB.getProcessPID(), childPCB);
 					// System.out.println(process.getProcessName() + " has been terminated");
 					break;
 					// if it ran all its cycles but not all of the commands, add it to the respected

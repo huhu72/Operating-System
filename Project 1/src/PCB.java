@@ -95,6 +95,8 @@ public class PCB {
 	private long processPID;
 	public CPUSchedulingInfo scheduleInfo = new CPUSchedulingInfo();
 	public CPUAccountingInfo accountingInfo = new CPUAccountingInfo();
+	private long childPID;
+	private long parentPID;
 
 	PCB(Process process){
 		this.state = STATE.NEW;
@@ -145,6 +147,20 @@ public class PCB {
 	}
 	public int getPriority() {
 		return this.scheduleInfo.getPriority();
+	}
+	public long getChildPID() {
+		return this.childPID;
+	}
+	public long getParentPID() {
+		return this.parentPID;
+	}
+
+	public void setChildPID(long childPID) {
+		this.childPID = childPID;
+	}
+
+	public void setParentPID(long parentPID) {
+		this.parentPID = parentPID;
 	}
 
 	@Override
