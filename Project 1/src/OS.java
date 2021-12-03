@@ -4,57 +4,33 @@ import java.io.FileNotFoundException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-
-public class OS{
+public class OS {
 	static boolean status = false;
 	static Dispatcher dispatcher = new Dispatcher();
 	static CPU cpu = new CPU();
-	
+
 	public static void main(String[] args) {
-		Semaphore S = new Semaphore();
-		OS os = new OS();
-		Scheduler scheduler = new Scheduler();
-		Timer timer = new Timer();
-		TimerTask tt = new TimerTask() {
 
-			@Override
-			public void run() {
-				cpu.print();
-				if(dispatcher.getReadyQueue().isEmpty() && dispatcher.getWaitingQueue().isEmpty()) {
-					timer.cancel();
-				}
-			}
-
-		};
-		S.setScheduler(scheduler);
-		S.setCPU(cpu);
-		cpu.setDispatcher(dispatcher);
-		cpu.S = S;
-		cpu.setScheduler(scheduler);
-	
 		Process p = new Process(cpu);
 
-		dispatcher.setScheduler(scheduler);
 		try {
 			p.createProcessesPrompt();
 		} catch (FileNotFoundException e) {
 
 			e.printStackTrace();
 		}
-		dispatcher.setCPU(cpu);
-		dispatcher.setPCBList(cpu.getPCBList());
-		dispatcher.setReadyQueue(cpu.getJobQueue());
-		//timer.scheduleAtFixedRate(tt, 10, 4000);
-	
+		Dispatcher.setPCBList(cpu.getPCBList());
+		Dispatcher.setReadyQueue(cpu.getJobQueue());
+		// timer.scheduleAtFixedRate(tt, 10, 4000);
+		
 		cpu.start();
 		cpu.interrupt();
-	
+
 		/*
 		 * for(Process p1 : dispatcher.getReadyQueue()) { System.out.println(p1); }
 		 */
 
 	}
-
 
 	/*
 	 * public void runCommand() { Process process; PCB pcb; ArrayList<Command>
