@@ -43,8 +43,8 @@ public class Process extends CPU implements Runnable {
 	public int timeLimit;
 	public int priority;
 	private int pidCounter = 0;
-	private long childPID = -1;
-	private long parentPID = -1;
+	private long childPID;
+	private long parentPID;
 	Process(CPU cpu){
 		this.cpu = cpu;
 	}
@@ -229,6 +229,7 @@ public class Process extends CPU implements Runnable {
 	@Override
 	public void run() {
 		try {
+			//System.out.println(this);
 			cpu.runProcesses(this);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block

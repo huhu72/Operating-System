@@ -5,7 +5,7 @@ import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class Scheduler implements Runnable {
+public class Scheduler {
 	private static HashMap<Long, PCB> pcbInfo = new HashMap<>();
 	// Optimized by the scheduler. Priorities are determined whether if its a sys
 	// operation or I/O. This is a subset of the processes queue
@@ -57,8 +57,8 @@ public class Scheduler implements Runnable {
 		return this.quantumStatus;
 	}
 
-	public void run() {
-		System.out.println("Starting a new timer");
+	public void run(Process process) {
+		System.out.println("Starting a new timer for " + process.getProcessName());
 		quantumStatus = true;
 		timer = new Timer();
 		TimerTask tt = new TimerTask() {
@@ -67,7 +67,7 @@ public class Scheduler implements Runnable {
 			public void run() {
 				System.out.println("Timer has been destroyed");
 				quantumStatus = false;
-				killQuantumTimer();
+				killQuantumTimer(process);
 			}
 
 		};
@@ -75,10 +75,10 @@ public class Scheduler implements Runnable {
 
 	}
 
-	public void killQuantumTimer() {
+	public void killQuantumTimer(Process process) {
 		timer.cancel();
 
-		 System.out.println("Timer has been terminated");
+		 System.out.println(process.getProcessName() + " timer has been terminated");
 	}
 
 	public static Queue<Process> sortSemaphoreWaitingQueue(Queue<Process> list) {

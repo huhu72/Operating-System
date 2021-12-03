@@ -30,7 +30,8 @@ public class CPU extends Thread {
 	@Override
 	public void run() {
 		ArrayList<Runnable> runnableProcesses = new ArrayList<>();
-		System.out.println("running");
+		Runnable process;
+		// System.out.println("running");
 		while (!Dispatcher.getReadyQueue().isEmpty() || !Dispatcher.getWaitingQueue().isEmpty()
 				|| !Semaphore.list.isEmpty()) {
 			/*
@@ -40,14 +41,20 @@ public class CPU extends Thread {
 
 			if (CPU.inCS) {
 				runnableProcesses.add(dispatchProcess());
-				System.out.println(runnableProcesses.get(0));
+				// System.out.println(runnableProcesses.get(0).getPriority());
 				for (int i = 0; i < 3; i++) {
-					runnableProcesses.add(dispatchProcess());
+					process = dispatchProcess();
+
+					if (process != null)
+						runnableProcesses.add(process);
 					// System.out.println(runnableProcesses.get(i+1));
 				}
 			} else {
 				for (int i = 0; i < 4; i++) {
-					runnableProcesses.add(dispatchProcess());
+					process = dispatchProcess();
+
+					if (process != null)
+						runnableProcesses.add(process);
 					// System.out.println(runnableProcesses.get(i));
 				}
 			}
@@ -74,11 +81,22 @@ public class CPU extends Thread {
 	}
 
 	public Runnable dispatchProcess() {
-		Runnable process;
+		Runnable runnableProcess;
+		Process process;
 		// Grabs from the ready queue if the waiting queue is empty(Usually when the cpu
 		// is first initiated)
 		if (Dispatcher.getWaitingQueue().isEmpty()) {
+
 			process = Dispatcher.getProcess();
+			runnableProcess = process;
+			if (process != null) {
+				System.out.println(
+						"The waiting queue is empty, grabbing " + process.getProcessName() + " from the ready queue");
+				return runnableProcess;
+			} else {
+				return null;
+			}
+
 			// System.out.println("Grabbing " + process.getProcessName() + " from the ready
 			// queue");
 			/*
@@ -90,15 +108,29 @@ public class CPU extends Thread {
 		} else if (Dispatcher.getWaitingQueue().isEmpty() && Dispatcher.getReadyQueue().isEmpty()) {
 			Semaphore.signal();
 			process = Dispatcher.getProcess();
+			runnableProcess = process;
+			if (process != null) {
+				System.out.println("The waiting and ready queue is empty is empty, grabbing " + process.getProcessName()
+						+ " from the ready queue after calling signal");
+				return runnableProcess;
+			} else {
+				return null;
+			}
 			/*
 			 * Grabs the process in the waiting queue since the queue isnt empty
 			 */
 		} else {
+
 			process = Dispatcher.getProcessFromWaitingQueue();
-			// System.out.println("Grabbing " + process.getProcessName() + " from the wating
-			// queue");
+			runnableProcess = process;
+			if (process != null) {
+				System.out.println("Grabbing " + process.getProcessName() + " from the wating queue");
+				return runnableProcess;
+			} else {
+				return null;
+			}
+
 		}
-		return process;
 
 	}
 
@@ -116,50 +148,49 @@ public class CPU extends Thread {
 		commands = process.getCommands();
 		CS = process.getCritStart();
 		CE = process.getCritEnd();
-		System.out.println(pcb.programCounter.getCommandCounter());
+		// System.out.println(pcb.programCounter.getCommandCounter());
 
 		if (commands.get(0).command.equals("I/O") && pcb.programCounter.getCommandCounter() == 1) {
-			// System.out.println(process.getProcessName() + " has been sent to the waiting
-			// queue");
+			System.out.println(process.getProcessName()
+					+ " has been sent to the waiting queue because the first command is a I/O instruction");
 			Dispatcher.addToWaitingQueue(process, pcb);
-			// System.out.println("Adding process to the waiting queue since the first
-			// command is an I/O");
 
 		}
 
-		// System.out.println("Running " + process.getProcessName());
+		System.out.println("Running " + process.getProcessName());
 		while (pcb.programCounter.getCommandCounter() <= process.getCommands().size()) {
 			Scheduler s = new Scheduler();
-			s.run();
-
+			s.run(process);
 			while (s.getQuantumStatus()) {
 				if (pcb.programCounter.getCommandCounter() == CS) {
 					Semaphore.wait(process);
 					CPU.inCS = true;
-					s.killQuantumTimer();
+					s.killQuantumTimer(process);
 					System.out.println(process.getProcessName() + " is now in CS and timer should be killed");
-					
+
 				}
 				// If the process runs all of the cyles in the command, it will increament the
 				// program counter
 				// and exit out of the loop
 				if (pcb.programCounter
 						.getCyclesRan() == commands.get(pcb.programCounter.getCommandCounter() - 1).cycle) {
-					
-					System.out.println("Timer should be killed");
-					s.killQuantumTimer();
+
+					// System.out.println("Timer should be killed");
+					s.killQuantumTimer(process);
 					pcb.programCounter.incrementProgramCounter();
 					pcb.programCounter.setCyclesRan(0);
-					
-
-					// System.out.println("Process has ran all cycles before the quantum time ran
-					// out");
+					pcbList.put(pcb.getProcessPID(), pcb);
+					System.out.println(
+							process.getProcessName() + " has ran all cycles before the quantum time ran out and "
+									+ process.getProcessName() + " timer has been killed");
 					break;
 				} else {
-					System.out.println("Command: " + pcb.programCounter.getCommandCounter());
+					System.out.println(
+							"Command for " + process.getProcessName() + ": " + pcb.programCounter.getCommandCounter());
 					pcb.programCounter.incrementProgramCycle();
-					System.out.println("On " + pcb.programCounter.getCyclesRan() + "/"
-							+ commands.get(pcb.programCounter.getCommandCounter() - 1).cycle + " cycle");
+					pcbList.put(pcb.getProcessPID(), pcb);
+					// System.out.println("On " + pcb.programCounter.getCyclesRan() + "/"
+					// + commands.get(pcb.programCounter.getCommandCounter() - 1).cycle + " cycle");
 				}
 
 			}
@@ -174,13 +205,15 @@ public class CPU extends Thread {
 				pcb.setState(STATE.EXIT);
 				CPU.pcbList.put(pcb.getProcessPID(), pcb);
 				// System.out.println(pcb.getChildPID());
-				if (pcb.getChildPID() != -1) {
+				if (pcbList.get(pcb.getChildPID()) != null) {
 					PCB childPCB = pcbList.get(pcb.getChildPID());
 					childPCB.programCounter.setCounter(3);
 					childPCB.setState(STATE.EXIT);
 					CPU.pcbList.put(childPCB.getProcessPID(), childPCB);
-				}
-				// System.out.println(process.getProcessName() + " has been terminated");
+					System.out.println(process.getProcessName() + " and its child "
+							+ childPCB.getProcess().getProcessName() + "has been terminated");
+				} else
+					System.out.println(process.getProcessName() + " been terminated");
 				break;
 
 				// if it ran all its cycles but not all of the commands, add it to the respected
@@ -189,34 +222,38 @@ public class CPU extends Thread {
 			if (CPU.pcbList.get(process.getPID()).getState() != STATE.EXIT) {
 				Command nextCommand = commands.get(pcb.programCounter.getCommandCounter() - 1);
 
-				if (pcb.programCounter.getCyclesRan() < nextCommand.cycle && nextCommand.command.equals("I/O")) {
-					// System.out.println(process.getProcessName() + " has been sent to the waiting
-					// queue");
-					Dispatcher.addToWaitingQueue(process, pcb);
-
-					// if there are still cycles to be ran in the current command and the command is
-					// Calculate
-					// Dont need to increment the program counter if the process still have cycles
-					// to run but the pcb needs to be updated
-					// in the Dispatcher class
-				} else if (pcb.programCounter.getCyclesRan() < nextCommand.cycle
-						&& nextCommand.command.equals("CALCULATE")) {
-					// System.out.println(process.getProcessName() + " has been sent to the ready
-					// queue");
-					Dispatcher.addToReadyQueue(process, pcb);
-					// Process is on its last command
-				} else {
+				Boolean t = pcb.programCounter.getCyclesRan() < nextCommand.cycle;
+				System.out.println("Is the current cycle less than the next: " + t);
+				if (pcb.programCounter.getCyclesRan() < nextCommand.cycle) {
+			
+					if (nextCommand.command.equals("I/O")) {
+						System.out.println(process.getProcessName()
+								+ " has been sent to the waiting queue because the next command is an I/O command");
+						Dispatcher.addToWaitingQueue(process, pcb);
+					} else {
+						// if there are still cycles to be ran in the current command and the command is
+						// Calculate
+						// Dont need to increment the program counter if the process still have cycles
+						// to run but the pcb needs to be updated
+						// in the Dispatcher class
+						System.out.println(process.getProcessName()
+								+ " has been sent to the ready queue because the next command is an calculate command");
+						Dispatcher.addToReadyQueue(process, pcb);
+					}
+				}
+				// Process is on its last command
+				else {
 					if (commands.get(pcb.programCounter.getCommandCounter()) != null) {
 
 						pcb.programCounter.setCyclesRan(0);
 						if (nextCommand.command.equals("CALCULATE")) {
-							// System.out.println(process.getProcessName()
-							// + " has been sent to the ready queue based on the next command");
+							System.out.println(process.getProcessName()
+									+ " is on its last command and has been sent to the ready queue based on the next command");
 							Dispatcher.addToReadyQueue(process, pcb);
 							// break;
 						} else {
-							// System.out.println(process.getProcessName() + " has been sent to the waiting
-							// queue");
+							System.out.println(process.getProcessName()
+									+ " is on its last command has been sent to the waiting queue");
 							Dispatcher.addToWaitingQueue(process, pcb);
 							// break;
 						}
