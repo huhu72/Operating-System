@@ -63,22 +63,22 @@ class CPUAccountingInfo{
 	
 }
 class ProgramCounter{
-	private int counter;
+	private int commandCounter;
 	private int cyclesRan;
-	public int getCounter() {
-		return counter;
+	public int getCommandCounter() {
+		return commandCounter;
 	}
 	public int getCyclesRan() {
 		return cyclesRan;
 	}
 	public void setCounter(int counter) {
-		this.counter = counter;
+		this.commandCounter = counter;
 	}
 	public void setCyclesRan(int cyclesRan) {
 		this.cyclesRan = cyclesRan;
 	}
 	public void incrementProgramCounter() {
-		this.counter++;
+		this.commandCounter++;
 	}
 	public void incrementProgramCycle() {
 		this.cyclesRan++;

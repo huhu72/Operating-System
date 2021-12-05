@@ -27,7 +27,7 @@ class Command{
 		   }
 		
 	}
-public class Process {
+public class Process extends CPU implements Runnable {
 	
 	
 	private ArrayList<Integer> cycles = new ArrayList<>();
@@ -146,10 +146,10 @@ public class Process {
 			process = new Process("Process" + processCreationCounter,getCommands(), (this.pid + this.pidCounter), this.critStart, this.critEnd);
 			this.pidCounter++;
 			this.processCreationCounter++;
-			if(randomNum == 1) {
+			/*if(randomNum == 1) {
 				Process childProcess = fork();
 				process.setChildPID(childProcess.getPID());
-			}
+			}*/
 			this.cpu.addToProcessQueue(process);
 			PCB pcb = new PCB(process);
 			pcb.setChildPID(process.childPID);
@@ -174,10 +174,7 @@ public class Process {
 	public ArrayList<Command> getCommands() {
 		return this.processCommands;
 	}
-	private int getCycles(int num) {
-		return this.cycles.get(num);
-	}
-	
+
 	
 	public void showTemplates() {
 		File[] templates = new File("./Templates").listFiles();
@@ -229,55 +226,15 @@ public class Process {
 	   public String toString() {
 	        return ("\nProcess Name: "+this.processName + "\nProcess PID: " + this.pid + "\nPriority: " + this.priority + "\n     Child PID: " + this.childPID + "\n     Parent PID: " + this.parentPID);
 	   }
-	/*	private void runProcesses(){
-	File[] processes = new File("./Processes/").listFiles();
-	int cycles;
-	int totalCycles = 0;
-	String command;
-	Scanner process;
-	for (File p : processes) {
-		System.out.println("Running " + p.getName());
+	@Override
+	public void run() {
 		try {
-			process = new Scanner(p);
-			while(process.hasNext()) {
-				command = process.next();
-				cycles = process.nextInt();
-				totalCycles = cycles + totalCycles;
-				//System.out.println("Running " + command);
-				for(int i = 0; i < cycles; i++) {
-					if(i == 0) {
-						System.out.println("STATUS: NEW");
-					}else if(i == cycles-1) {
-						System.out.println("STATUS: EXIT");
-					}else {
-						System.out.println("STATUS: RUN");
-					}
-				}
-			}
-			
-		} catch (FileNotFoundException e) {
+			//System.out.println(this);
+			cpu.runProcesses(this);
+		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		for(int i = 0; i < totalCycles; i++) {
-			if(i == 0) {
-				System.out.println("STATUS: NEW");
-			}else if(i == totalCycles-1) {
-				System.out.println("STATUS: EXIT");
-			}else {
-				System.out.println("STATUS: RUN");
-			}
-		}
-		
 	}
-}*/
-
-/*	Process(){
-		this.state = STATE.NEW;
-		this.processFile = new File("");
-		this.programCounter = 1;
-		this.memory = 0;
-		
-	}*/
 	
 }
