@@ -24,7 +24,7 @@ public class OS {
 		// timer.scheduleAtFixedRate(tt, 10, 4000);
 		
 		cpu.start();
-		cpu.interrupt();
+	
 
 		/*
 		 * for(Process p1 : dispatcher.getReadyQueue()) { System.out.println(p1); }

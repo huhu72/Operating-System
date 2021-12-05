@@ -65,7 +65,6 @@ public class Scheduler {
 
 			@Override
 			public void run() {
-				System.out.println("Timer has been destroyed");
 				quantumStatus = false;
 				killQuantumTimer(process);
 			}

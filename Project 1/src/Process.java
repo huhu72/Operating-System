@@ -146,10 +146,10 @@ public class Process extends CPU implements Runnable {
 			process = new Process("Process" + processCreationCounter,getCommands(), (this.pid + this.pidCounter), this.critStart, this.critEnd);
 			this.pidCounter++;
 			this.processCreationCounter++;
-			if(randomNum == 1) {
+			/*if(randomNum == 1) {
 				Process childProcess = fork();
 				process.setChildPID(childProcess.getPID());
-			}
+			}*/
 			this.cpu.addToProcessQueue(process);
 			PCB pcb = new PCB(process);
 			pcb.setChildPID(process.childPID);
