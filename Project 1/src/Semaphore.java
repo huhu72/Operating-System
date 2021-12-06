@@ -11,12 +11,12 @@ public class Semaphore {
 
 	/// All of the below should belong in the semaphore class
 	public static synchronized void wait(Process P) {
-		System.out.println("										"+P.getProcessName() + " called wait()");
+		if(CPU.status)System.out.println("										"+P.getProcessName() + " called wait()");
 		Semaphore.value--;
 		if (Semaphore.value < 0) {
 			Semaphore.list.add(P);
 			block(P);
-			System.out.println(P.getProcessName() + "has been sent to the semaphore waiting queue since S < 0");
+			if(CPU.status)	System.out.println(P.getProcessName() + "has been sent to the semaphore waiting queue since S < 0");
 		}
 	}
 
@@ -26,7 +26,7 @@ public class Semaphore {
 		if (Semaphore.value <= 0) {
 			Process P = Semaphore.list.poll();
 			wakeUp(P);
-			System.out.println(P.getProcessName() + "has been put back into the ready queue");
+			if(CPU.status)System.out.println(P.getProcessName() + "has been put back into the ready queue");
 		}
 	}
 
