@@ -19,7 +19,7 @@ public class Dispatcher {
 	private static Queue<Process> waitingQueue = new LinkedList<>();
 	// in order to implement aging, the element needs to be removed, increamented,
 	// and then added back bc you cant access the element in the pq
-	private static Queue<Process> readyQueue = new LinkedList<>();
+	private static Queue<Process> readyQueue;
 	private static HashMap<Long, PCB> pcbList;
 
 	Dispatcher() {
@@ -31,12 +31,19 @@ public class Dispatcher {
 	}
 
 	public static void setReadyQueue(Queue<Process> p) {
+		readyQueue  = new LinkedList<>();
 		for (Process processes : p) {
 			Dispatcher.pcbList.get(processes.getPID()).setState(STATE.READY);
 			Dispatcher.readyQueue.add(processes);
 		}
 	}
-
+	public void addToCompareQueue(Process p, PCB pcb) {
+	
+		CPU.updateComparePCBList(p,pcb);
+		Dispatcher.readyQueue.add(p);
+		sortReadyQueue(Dispatcher.readyQueue);
+		Dispatcher.readyQueue = Scheduler.getReadyQueue();
+	}
 	public static void addToReadyQueue(Process process, PCB pcb) {
 		Dispatcher.pcbList.put(process.getPID(), pcb);
 		CPU.updatePCBList(process,pcb);

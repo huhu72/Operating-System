@@ -16,17 +16,19 @@ public class CPU extends Thread {
 	static Boolean waitingForCS = false;
 	private static Queue<Process> processes = new LinkedList<>();// AKA job queue. where does this go if the input for
 																	// the
-	// Scheduler is only the readyQueue
-
+	Queue<Process> compareQueue = new LinkedList<>();
+	Boolean compare = true;
 	// private Queue<Process> deviceQueue = new LinkedList<>();//FIFO. after pcb
 	// gets processed, it goes back to the ready queue and the deviceQueue runs the
 	// next process
 	private static HashMap<Long, PCB> pcbList = new HashMap<>();
+	static HashMap<Long, PCB> comparePCBList = new HashMap<>();
 	Scanner input = new Scanner(System.in);
 	static Timer t = new Timer();
 	static Process processInCS;
 	static int counter = 0;
 	Thread processThreadArray[] = new Thread[4];
+	public static String scheduler;
 	static Boolean status = false;
 
 //CPu tells Dispatcher there are no processes running, from that, the Dispatcher should send another profess from the Scheduler to the cpu
@@ -106,8 +108,6 @@ public class CPU extends Thread {
 				return null;
 			}
 
-			// System.out.println("Grabbing " + process.getProcessName() + " from the ready
-			// queue");
 			/*
 			 * If both the ready and waiting queue is empty, then signal the semahpore so
 			 * that it can remove it from its own waiting queue and populate it into the
@@ -167,7 +167,7 @@ public class CPU extends Thread {
 		int randomNum = (int) Math.floor(Math.random() * (100 - 0 + 1) + 0);
 		if (randomNum == 1) {
 			if (CPU.status) {
-				System.out.println("Process is put to slep");
+				System.out.println("Process is put to sleep");
 			}
 			Thread.sleep(10);
 		}
@@ -184,12 +184,14 @@ public class CPU extends Thread {
 
 		}
 
-		// System.out.println("Running " + process.getProcessName());
+		
 
 		Scheduler s = new Scheduler();
-		s.run(process);
-
+		if (scheduler.equals("RR"))
+			s.run(process);
+		
 		while (s.getQuantumStatus()) {
+			
 			if (inCS && Semaphore.list.contains(process)) {
 				if (status) {
 					System.out.println("						There is a process in cs");
@@ -198,7 +200,8 @@ public class CPU extends Thread {
 			}
 			if (pcb.programCounter.getCommandCounter() == CS && pcb.programCounter.getCyclesRan() == 0) {
 				Semaphore.wait(process);
-				s.killQuantumTimer(process);
+				if (scheduler.equals("RR"))
+					s.killQuantumTimer(process);
 				if (Semaphore.list.contains(process)) {
 					break;
 				} else {
@@ -209,43 +212,47 @@ public class CPU extends Thread {
 			// If the process runs all of the cyles in the command, it will increament the
 			// program counter
 			// and exit out of the loop
+			if (pcb.programCounter.getCommandCounter() != commands.size()) {
+				if (pcb.programCounter
+						.getCyclesRan() == commands.get(pcb.programCounter.getCommandCounter() - 1).cycle) {
 
-			if (pcb.programCounter.getCyclesRan() == commands.get(pcb.programCounter.getCommandCounter() - 1).cycle) {
-
-				s.killQuantumTimer(process);
-				pcb.programCounter.incrementProgramCounter();
-				pcb.programCounter.setCyclesRan(0);
-				pcbList.put(pcb.getProcessPID(), pcb);
-				if (status) {
-					System.out.println(
-							process.getProcessName() + " has ran all cycles before the quantum time ran out and "
-									+ process.getProcessName() + " timer has been killed");
-				}
-				if (pcb.programCounter.getCommandCounter() == CE) {
+					if (scheduler.equals("RR"))
+						s.killQuantumTimer(process);
+					pcb.programCounter.incrementProgramCounter();
+					pcb.programCounter.setCyclesRan(0);
+					pcbList.put(pcb.getProcessPID(), pcb);
 					if (status) {
-						System.out.println("												"
-								+ pcb.getProcess().getProcessName() + " has called signal()");
+						System.out.println(
+								process.getProcessName() + " has ran all cycles before the quantum time ran out and "
+										+ process.getProcessName() + " timer has been killed");
 					}
-					Semaphore.signal();
-					CPU.inCS = false;
-					CPU.pcbList.put(pcb.getProcessPID(), pcb);
+					if (pcb.programCounter.getCommandCounter() == CE) {
+						if (status) {
+							System.out.println("												"
+									+ pcb.getProcess().getProcessName() + " has called signal()");
+						}
+						Semaphore.signal();
+						CPU.inCS = false;
+						CPU.pcbList.put(pcb.getProcessPID(), pcb);
+					} else {
+						break;
+					}
 				} else {
-					break;
-				}
-			} else {
-				if (status) {
-					System.out.println(
-							"Command for " + process.getProcessName() + ": " + pcb.programCounter.getCommandCounter());
-				}
-				pcb.programCounter.incrementProgramCycle();
-				CPU.pcbList.put(pcb.getProcessPID(), pcb);
-				if (status) {
-					System.out.println("On " + pcb.programCounter.getCyclesRan() + "/"
-							+ commands.get(pcb.programCounter.getCommandCounter() - 1).cycle + " cycle");
+					if (status) {
+						System.out.println("Command for " + process.getProcessName() + ": "
+								+ pcb.programCounter.getCommandCounter());
+					}
+					pcb.programCounter.incrementProgramCycle();
+					CPU.pcbList.put(pcb.getProcessPID(), pcb);
+					if (status) {
+						System.out.println("On " + pcb.programCounter.getCyclesRan() + "/"
+								+ commands.get(pcb.programCounter.getCommandCounter() - 1).cycle + " cycle");
+					}
 				}
 			}
 
 		}
+		
 		if (!Semaphore.list.contains(pcb.getProcess())) {
 
 			// If the process is out of commands to run
@@ -261,9 +268,11 @@ public class CPU extends Thread {
 					if (status) {
 						System.out.println(process.getProcessName() + " and its child "
 								+ childPCB.getProcess().getProcessName() + "has been terminated");
+						Process.memoryCount -= process.memory-childPCB.getProcess().memory;
 					}
 				} else {
 					if (status) {
+						Process.memoryCount -= process.memory;
 						System.out.println(process.getProcessName() + " been terminated");
 					}
 				}
@@ -329,8 +338,10 @@ public class CPU extends Thread {
 				}
 				runnableProcess = dispatchProcess();
 				currentThread = new Thread(runnableProcess);
-				if (runnableProcess != null)
+				if (runnableProcess != null) {
 					currentThread.start();
+				}
+					
 			}
 			/*
 			 * System.out.println("finished"); System.out.println("The ready queue: " +
@@ -400,6 +411,96 @@ public class CPU extends Thread {
 		CPU.pcbList.put(pcb.getProcessPID(), pcb);
 	}
 
-	
+	public void addToCompareQueue(Process p) {
+		this.compareQueue.add(p);
+	}
+
+	public Queue<Process> getCompareQueue() {
+		return this.compareQueue;
+	}
+
+	public void addToComparePCBList(PCB pcb) {
+		this.comparePCBList.put(pcb.getProcessPID(), pcb);
+	}
+
+	public HashMap<Long, PCB> getComparePCBList() {
+		return this.comparePCBList;
+	}
+
+	public int compareRR() {
+		int totalCyclesRanForRR = 0;
+		Timer compareTimer = new Timer();
+		TimerTask compareTimerTask = new TimerTask() {
+
+			@Override
+			public void run() {
+				compare = false;
+			}
+
+		};
+		compareTimer.schedule(compareTimerTask, 30);
+		// Using round robin first
+		while (compare && !Dispatcher.getReadyQueue().isEmpty()) {
+
+			Process p = Dispatcher.getProcess();
+			if (p != null) {
+				// System.out.println(p);
+				PCB pcb = comparePCBList.get(p.getPID());
+				ArrayList<Command> commands = p.getCommands();
+				Scheduler s = new Scheduler();
+				s.run(p);
+				while (s.getQuantumStatus() && pcb.programCounter.getCyclesRan() < commands.get(0).cycle) {
+					pcb.programCounter.incrementProgramCycle();
+					totalCyclesRanForRR++;
+					CPU.comparePCBList.put(pcb.getProcessPID(), pcb);
+
+					if (pcb.programCounter.getCyclesRan() < commands.get(0).cycle) {
+						Dispatcher.addToReadyQueue(p, pcb);
+					}
+				}
+
+			}
+
+		}
+
+		return totalCyclesRanForRR;
+	}
+
+	public int comparePQ() {
+		compare = true;
+		int totalCyclesRanForPQ = 0;
+		Timer compareTimer = new Timer();
+		TimerTask compareTimerTask = new TimerTask() {
+
+			@Override
+			public void run() {
+				compare = false;
+			}
+
+		};
+		compareTimer.schedule(compareTimerTask, 30);
+		// Using round robin first
+		while (compare && !Dispatcher.getReadyQueue().isEmpty()) {
+			Process p = Dispatcher.getProcess();
+			if (p != null) {
+				PCB pcb = comparePCBList.get(p.getPID());
+				ArrayList<Command> commands = p.getCommands();
+
+				while (pcb.programCounter.getCyclesRan() < commands.get(0).cycle) {
+					pcb.programCounter.incrementProgramCycle();
+					totalCyclesRanForPQ++;
+					CPU.comparePCBList.put(pcb.getProcessPID(), pcb);
+				}
+			}
+		}
+
+		return totalCyclesRanForPQ;
+
+	}
+
+	public static void updateComparePCBList(Process p, PCB pcb) {
+		comparePCBList.put(p.getPID(), pcb);
+
+	}
 
 }

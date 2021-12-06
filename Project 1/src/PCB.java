@@ -103,7 +103,7 @@ public class PCB {
 		//This should also state how many cycles have been ran. Can be a seperate fields
 		this.programCounter.setCounter(1); 
 		this.programCounter.setCyclesRan(0);
-		this.memory = 0;
+		this.memory = process.memory;
 		this.process = process;
 		this.processPID = process.getPID();
 		this.scheduleInfo.setPriority(process.priority);

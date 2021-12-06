@@ -44,7 +44,9 @@ public class Process extends CPU implements Runnable {
 	private int pidCounter = 0;
 	private long childPID;
 	private long parentPID;
-
+	int TOTAL_MEMORY = 1024;
+	static int memoryCount;
+	int memory;
 	Process(CPU cpu) {
 		this.cpu = cpu;
 	}
@@ -57,6 +59,7 @@ public class Process extends CPU implements Runnable {
 		this.critEnd = critEnd;
 		this.timeLimit = 4;
 		this.priority = (int) ((Math.random() * (10 - 1)) + 1);
+		this.memory = (int) ((Math.random() * (1024 - 1)) + 1);
 	}
 
 	/*
@@ -91,8 +94,8 @@ public class Process extends CPU implements Runnable {
 				createProcesses(arguments[i] + ".txt", Long.parseLong(arguments[i + 1]));
 
 			}
-		Thread s = new Thread(new Status(this.cpu));
-		s.start();
+			Thread s = new Thread(new Status(this.cpu));
+			s.start();
 
 		}
 
@@ -160,8 +163,31 @@ public class Process extends CPU implements Runnable {
 			PCB pcb = new PCB(process);
 			pcb.setChildPID(process.childPID);
 			this.cpu.addPCB(pcb);
+			memoryCount += process.memory;
+			if(memoryCount>TOTAL_MEMORY) {
+				Dispatcher.addToReadyQueue(process, pcb);
+			}
 
 		}
+
+	}
+
+	public void createCompareProcesses() throws FileNotFoundException {
+		Process process;
+		long pid = 1;
+		long pidCounter = 0;
+		int processCreationCounter = 1;
+		for (int i = 0; i < 1000; i++) {
+			createCommands("compare.txt");
+			process = new Process("Process" + processCreationCounter, getCommands(), (pid + pidCounter),
+					this.critStart, this.critEnd);
+			pidCounter++;
+			processCreationCounter++;
+			this.cpu.addToCompareQueue(process);
+			PCB pcb = new PCB(process);
+			this.cpu.addToComparePCBList(pcb);
+		}
+		//System.out.println(this.cpu.getCompareQueue());
 
 	}
 

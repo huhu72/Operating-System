@@ -1,11 +1,13 @@
 
 import java.io.FileNotFoundException;
-
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class OS {
-	
+
 	static Dispatcher dispatcher = new Dispatcher();
 	static CPU cpu = new CPU();
 	static Status status = new Status(cpu);
@@ -13,23 +15,49 @@ public class OS {
 	public static void main(String[] args) {
 
 		Process p = new Process(cpu);
-
+		try {
+			p.createCompareProcesses();
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		// Get total number of cycles in all 100 processes that will be used to compare
+		// the schedulers
+		
+		Dispatcher.setPCBList(cpu.getComparePCBList());
+		Dispatcher.setReadyQueue(cpu.getCompareQueue());
+		
+		int RRCycles = cpu.compareRR();
+		cpu.compareQueue = new LinkedList<Process>();
+		CPU.comparePCBList = new HashMap<>();
+		try {
+			p.createCompareProcesses();
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}		
+		Dispatcher.setPCBList(cpu.getComparePCBList());
+		Dispatcher.setReadyQueue(cpu.getCompareQueue());
+		int PQCycles = cpu.comparePQ();
+		if(RRCycles < PQCycles) {
+			CPU.scheduler = "PQ";
+			
+		}else {
+			CPU.scheduler = "RR";
+		
+		}
+		
 		try {
 			p.createProcessesPrompt();
 		} catch (FileNotFoundException e) {
 
 			e.printStackTrace();
 		}
-		Thread statusThread = new Thread(status);
-		//statusThread.start();
+		// statusThread.start();
 		Dispatcher.setPCBList(cpu.getPCBList());
 		Dispatcher.setReadyQueue(cpu.getJobQueue());
-		// timer.scheduleAtFixedRate(tt, 10, 4000);
 
 		cpu.start();
-		
-		
-	
 
 		/*
 		 * for(Process p1 : dispatcher.getReadyQueue()) { System.out.println(p1); }
