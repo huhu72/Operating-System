@@ -5,9 +5,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class OS {
-	static boolean status = false;
+	
 	static Dispatcher dispatcher = new Dispatcher();
 	static CPU cpu = new CPU();
+	static Status status = new Status(cpu);
 
 	public static void main(String[] args) {
 
@@ -19,11 +20,15 @@ public class OS {
 
 			e.printStackTrace();
 		}
+		Thread statusThread = new Thread(status);
+		//statusThread.start();
 		Dispatcher.setPCBList(cpu.getPCBList());
 		Dispatcher.setReadyQueue(cpu.getJobQueue());
 		// timer.scheduleAtFixedRate(tt, 10, 4000);
-		
+
 		cpu.start();
+		
+		
 	
 
 		/*
