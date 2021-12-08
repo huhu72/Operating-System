@@ -6,51 +6,56 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class Scheduler {
-	private static HashMap<Long, PCB> pcbInfo = new HashMap<>();
+	private HashMap<Long, PCB> pcbInfo = new HashMap<>();
 	// Optimized by the scheduler. Priorities are determined whether if its a sys
 	// operation or I/O. This is a subset of the processes queue
-	private static Queue<Process> readyQueue = new PriorityQueue<>((p1, p2) -> {
+	private  Queue<Process> readyQueue = new PriorityQueue<>((p1, p2) -> {
 		return pcbInfo.get(p2.getPID()).getPriority() - pcbInfo.get(p1.getPID()).getPriority();
 	});;
-	private static Queue<Process> waitingQueue = new PriorityQueue<>((p1, p2) -> {
+	private  Queue<Process> waitingQueue = new PriorityQueue<>((p1, p2) -> {
 		return pcbInfo.get(p2.getPID()).getPriority() - pcbInfo.get(p1.getPID()).getPriority();
 	});;
 	private Boolean quantumStatus = true;
 	Timer timer;
+	private CPU cpu;
 
-	Scheduler() {
-
+	Scheduler(CPU cpu) {
+		this.cpu = cpu;
 	}
 
-	public static void addToPQ(Process p) {
-		Scheduler.readyQueue.add(p);
+	public Scheduler() {
+		
 	}
 
-	public static void addPCBInfo(PCB pcb) {
-		Scheduler.pcbInfo.put(pcb.getProcessPID(), pcb);
+	public void addToPQ(Process p) {
+		this.readyQueue.add(p);
 	}
 
-	public static Process getProcess() {
-		return Scheduler.readyQueue.poll();
+	public void addPCBInfo(PCB pcb) {
+		this.pcbInfo.put(pcb.getProcessPID(), pcb);
 	}
 
-	public static void setReadyQueue(Queue<Process> rq, HashMap<Long, PCB> pcbList) {
-		Scheduler.readyQueue = rq;
-		Scheduler.pcbInfo = pcbList;
+	public Process getProcess() {
+		return this.readyQueue.poll();
 	}
 
-	public static Queue<Process> getReadyQueue() {
+	public void setReadyQueue(Queue<Process> rq, HashMap<Long, PCB> pcbList) {
+		this.readyQueue = rq;
+		this.pcbInfo = pcbList;
+	}
+
+	public Queue<Process> getReadyQueue() {
 		return readyQueue;
 	}
 
-	public static void setWaitingQueue(Queue<Process> waitingQueue, HashMap<Long, PCB> pcbList) {
-		Scheduler.waitingQueue = waitingQueue;
-		Scheduler.pcbInfo = pcbList;
+	public void setWaitingQueue(Queue<Process> waitingQueue, HashMap<Long, PCB> pcbList) {
+		this.waitingQueue = waitingQueue;
+		this.pcbInfo = pcbList;
 
 	}
 
-	public static Queue<Process> getWaitingQueue() {
-		return Scheduler.waitingQueue;
+	public Queue<Process> getWaitingQueue() {
+		return this.waitingQueue;
 	}
 
 	public Boolean getQuantumStatus() {
@@ -58,7 +63,8 @@ public class Scheduler {
 	}
 
 	public void run(Process process) {
-		if(CPU.status)System.out.println("Starting a new timer for " + process.getProcessName());
+		if (cpu.status)
+			System.out.println("Starting a new timer for " + process.getProcessName());
 		quantumStatus = true;
 		timer = new Timer();
 		TimerTask tt = new TimerTask() {
@@ -77,12 +83,13 @@ public class Scheduler {
 	public void killQuantumTimer(Process process) {
 		timer.cancel();
 
-		if(CPU.status) System.out.println(process.getProcessName() + " timer has been terminated");
+		if (cpu.status)
+			System.out.println(process.getProcessName() + " timer has been terminated");
 	}
 
-	public static Queue<Process> sortSemaphoreWaitingQueue(Queue<Process> list) {
+	public Queue<Process> sortSemaphoreWaitingQueue(Queue<Process> list) {
 		Queue<Process> sortedList = new PriorityQueue<>((p1, p2) -> {
-			return Scheduler.pcbInfo.get(p2.getPID()).getPriority() - pcbInfo.get(p1.getPID()).getPriority();
+			return this.pcbInfo.get(p2.getPID()).getPriority() - this.pcbInfo.get(p1.getPID()).getPriority();
 		});
 		sortedList.addAll(list);
 		return sortedList;

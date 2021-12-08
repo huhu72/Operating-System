@@ -47,11 +47,12 @@ public class Process extends CPU implements Runnable {
 	int TOTAL_MEMORY = 1024;
 	static int memoryCount;
 	int memory;
-	Process(CPU cpu) {
+	Process(CPU cpu, Dispatcher d) {
 		this.cpu = cpu;
+		this.dispatcher = d;
 	}
 
-	Process(String processName, ArrayList<Command> commands, long pid, int critStart, int critEnd) {
+	Process(String processName, ArrayList<Command> commands, long pid, int critStart, int critEn) {
 		this.processName = processName;
 		this.processCommands = commands;
 		this.pid = pid;
@@ -68,9 +69,6 @@ public class Process extends CPU implements Runnable {
 	 * Auto-generated catch block e.printStackTrace(); } }
 	 */
 
-	public Process() {
-		// TODO Auto-generated constructor stub
-	}
 
 	public void createProcessesPrompt() throws FileNotFoundException {
 		String command;
@@ -151,6 +149,8 @@ public class Process extends CPU implements Runnable {
 			createCommands(templateName);
 			process = new Process("Process" + processCreationCounter, getCommands(), (this.pid + this.pidCounter),
 					this.critStart, this.critEnd);
+			process.setCPU(this.cpu);
+			process.setDispatcher(this.dispatcher);
 			this.pidCounter++;
 			this.processCreationCounter++;
 
@@ -165,7 +165,7 @@ public class Process extends CPU implements Runnable {
 			this.cpu.addPCB(pcb);
 			memoryCount += process.memory;
 			if(memoryCount>TOTAL_MEMORY) {
-				Dispatcher.addToReadyQueue(process, pcb);
+				this.dispatcher.addToReadyQueue(process, pcb);
 			}
 
 		}
@@ -181,6 +181,9 @@ public class Process extends CPU implements Runnable {
 			createCommands("compare.txt");
 			process = new Process("Process" + processCreationCounter, getCommands(), (pid + pidCounter),
 					this.critStart, this.critEnd);
+			
+			process.setCPU(this.cpu);
+			process.setDispatcher(this.dispatcher);
 			pidCounter++;
 			processCreationCounter++;
 			this.cpu.addToCompareQueue(process);
@@ -196,6 +199,8 @@ public class Process extends CPU implements Runnable {
 		Process childProcess = new Process("Process" + processCreationCounter, getCommands(),
 				(this.pid + this.pidCounter), this.critStart, this.critEnd);
 		childProcess.setParentPID(this.getPID());
+		childProcess.setCPU(this.cpu);
+		childProcess.setDispatcher(this.dispatcher);
 		this.pidCounter++;
 		this.processCreationCounter++;
 		this.cpu.addToProcessQueue(childProcess);
@@ -264,12 +269,16 @@ public class Process extends CPU implements Runnable {
 		return ("\nProcess Name: " + this.processName + "\nProcess PID: " + this.pid + "\nPriority: " + this.priority
 				+ "\n     Child PID: " + this.childPID + "\n     Parent PID: " + this.parentPID);
 	}
+	
+	public void setCPU(CPU cpu) {
+		this.cpu = cpu;
+	}
 
 	@Override
 	public void run() {
 
 		try {
-			CPU.runProcesses(this);
+			cpu.runProcesses(this);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -16,9 +16,9 @@ public class Status implements Runnable {
 			input = scanner.nextLine();
 			input.toLowerCase().trim();
 			if (input.equals("status")) {
-				CPU.status = true;
-				CPU.print();
-				CPU.status = false;
+				cpu.status = true;
+				cpu.print();
+				cpu.status = false;
 			}
 		}
 

@@ -21,8 +21,11 @@ public class Dispatcher {
 	// and then added back bc you cant access the element in the pq
 	private static Queue<Process> readyQueue;
 	private static HashMap<Long, PCB> pcbList;
+	private CPU cpu;
+	private Scheduler scheduler;
 
-	Dispatcher() {
+	Dispatcher(CPU cpu) {
+		this.cpu = cpu;
 
 	}
 
@@ -31,47 +34,50 @@ public class Dispatcher {
 	}
 
 	public static void setReadyQueue(Queue<Process> p) {
-		readyQueue  = new LinkedList<>();
+		readyQueue = new LinkedList<>();
 		for (Process processes : p) {
 			Dispatcher.pcbList.get(processes.getPID()).setState(STATE.READY);
 			Dispatcher.readyQueue.add(processes);
 		}
 	}
+
 	public void addToCompareQueue(Process p, PCB pcb) {
-	
-		CPU.updateComparePCBList(p,pcb);
+
+		this.cpu.updateComparePCBList(p, pcb);
 		Dispatcher.readyQueue.add(p);
 		sortReadyQueue(Dispatcher.readyQueue);
-		Dispatcher.readyQueue = Scheduler.getReadyQueue();
-	}
-	public static void addToReadyQueue(Process process, PCB pcb) {
-		Dispatcher.pcbList.put(process.getPID(), pcb);
-		CPU.updatePCBList(process,pcb);
-		Dispatcher.readyQueue.add(process);
-		sortReadyQueue(Dispatcher.readyQueue);
-		Dispatcher.readyQueue = Scheduler.getReadyQueue();
+		Dispatcher.readyQueue = scheduler.getReadyQueue();
 	}
 
-	public static Queue<Process> getReadyQueue() {
+	public  void addToReadyQueue(Process process, PCB pcb) {
+		Dispatcher.pcbList.put(process.getPID(), pcb);
+		this.cpu.updatePCBList(process, pcb);
+		Dispatcher.readyQueue.add(process);
+		sortReadyQueue(Dispatcher.readyQueue);
+		Dispatcher.readyQueue = scheduler.getReadyQueue();
+	}
+
+	public Queue<Process> getReadyQueue() {
 		return Dispatcher.readyQueue;
 	}
 
-	public static Process getProcess() {
+	public Process getProcess() {
 		return Dispatcher.readyQueue.poll();
-		//System.out.println(processReturn.getProcessName() + " is being sent to the cpu to run");
+		// System.out.println(processReturn.getProcessName() + " is being sent to the
+		// cpu to run");
 	}
 
-	public static void addToWaitingQueue(Process process, PCB pcb) {
+	public void addToWaitingQueue(Process process, PCB pcb) {
 		pcbList.put(process.getPID(), pcb);
-		CPU.updatePCBList(process,pcb);
+		this.cpu.updatePCBList(process, pcb);
 		Dispatcher.waitingQueue.add(process);
 		sortWaitingQueue(Dispatcher.waitingQueue);
-		Dispatcher.waitingQueue = Scheduler.getWaitingQueue();
+		Dispatcher.waitingQueue = scheduler.getWaitingQueue();
 	}
 
-	public static void sortWaitingQueue(Queue<Process> wq) {
-		Scheduler.setWaitingQueue(wq, Dispatcher.pcbList);
-		Dispatcher.waitingQueue = Scheduler.getWaitingQueue();
+	public void sortWaitingQueue(Queue<Process> wq) {
+		scheduler.setWaitingQueue(wq, Dispatcher.pcbList);
+		Dispatcher.waitingQueue = scheduler.getWaitingQueue();
 	}
 
 	public static Queue<Process> getWaitingQueue() {
@@ -80,15 +86,20 @@ public class Dispatcher {
 
 	public static Process getProcessFromWaitingQueue() {
 		Process processReturn = Dispatcher.waitingQueue.poll();
-	//	System.out.println(processReturn.getProcessName() + " is being sent to the cpu to run from the waiting queue");
+		// System.out.println(processReturn.getProcessName() + " is being sent to the
+		// cpu to run from the waiting queue");
 		return processReturn;
 	}
 
+	// Sends the queue into the scheduler and resets the ready
+	public void sortReadyQueue(Queue<Process> rq) {
+		scheduler.setReadyQueue(rq, Dispatcher.pcbList);
+		Dispatcher.readyQueue = scheduler.getReadyQueue();
+	}
 
-	// Sends the queue into the Scheduler and resets the ready
-	public static void sortReadyQueue(Queue<Process> rq) {
-		Scheduler.setReadyQueue(rq, Dispatcher.pcbList);
-		Dispatcher.readyQueue = Scheduler.getReadyQueue();
+	public void setScheduler(Scheduler scheduler) {
+		this.scheduler = scheduler;
+
 	}
 
 }

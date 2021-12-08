@@ -8,13 +8,17 @@ import java.util.TimerTask;
 
 public class OS {
 
-	static Dispatcher dispatcher = new Dispatcher();
-	static CPU cpu = new CPU();
-	static Status status = new Status(cpu);
-
 	public static void main(String[] args) {
 
-		Process p = new Process(cpu);
+		CPU cpu = new CPU();
+		Dispatcher dispatcher = new Dispatcher(cpu);
+		Status status = new Status(cpu);
+		Scheduler scheduler = new Scheduler(cpu);
+		cpu.setScheduler(scheduler);
+		dispatcher.setScheduler(scheduler);
+		cpu.setDispatcher(dispatcher);
+		Process p = new Process(cpu, dispatcher);
+		
 		try {
 			p.createCompareProcesses();
 		} catch (FileNotFoundException e1) {
@@ -23,30 +27,30 @@ public class OS {
 		}
 		// Get total number of cycles in all 100 processes that will be used to compare
 		// the schedulers
-		
+
 		Dispatcher.setPCBList(cpu.getComparePCBList());
 		Dispatcher.setReadyQueue(cpu.getCompareQueue());
-		
+
 		int RRCycles = cpu.compareRR();
 		cpu.compareQueue = new LinkedList<Process>();
-		CPU.comparePCBList = new HashMap<>();
+		cpu.comparePCBList = new HashMap<>();
 		try {
 			p.createCompareProcesses();
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		}		
+		}
 		Dispatcher.setPCBList(cpu.getComparePCBList());
 		Dispatcher.setReadyQueue(cpu.getCompareQueue());
 		int PQCycles = cpu.comparePQ();
-		if(RRCycles < PQCycles) {
-			CPU.scheduler = "PQ";
-			
-		}else {
-			CPU.scheduler = "RR";
-		
+		if (RRCycles < PQCycles) {
+			cpu.scheduler = "PQ";
+
+		} else {
+			cpu.scheduler = "RR";
+
 		}
-		
+
 		try {
 			p.createProcessesPrompt();
 		} catch (FileNotFoundException e) {

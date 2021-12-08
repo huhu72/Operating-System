@@ -9,31 +9,33 @@ import java.util.TimerTask;
 
 //move all process created relations to the process class/main class.
 //Wait for all processes to be put in the ready queue and then start running them.
-//Same logic applies to the Dispatcher(Wait for all processes to be created before Dispatcher puts them in the ready queue and Scheduler organizes them).
+//Same logic applies to the dispatcher(Wait for all processes to be created before dispatcher puts them in the ready queue and Scheduler organizes them).
 
 public class CPU extends Thread {
-	static Boolean inCS = false;
-	static Boolean waitingForCS = false;
-	private static Queue<Process> processes = new LinkedList<>();// AKA job queue. where does this go if the input for
+	Boolean inCS = false;
+	Boolean waitingForCS = false;
+	private Queue<Process> processes = new LinkedList<>();// AKA job queue. where does this go if the input for
 																	// the
 	Queue<Process> compareQueue = new LinkedList<>();
 	Boolean compare = true;
 	// private Queue<Process> deviceQueue = new LinkedList<>();//FIFO. after pcb
 	// gets processed, it goes back to the ready queue and the deviceQueue runs the
 	// next process
-	private static HashMap<Long, PCB> pcbList = new HashMap<>();
-	static HashMap<Long, PCB> comparePCBList = new HashMap<>();
+	private  HashMap<Long, PCB> pcbList = new HashMap<>();
+	HashMap<Long, PCB> comparePCBList = new HashMap<>();
 	Scanner input = new Scanner(System.in);
-	static Timer t = new Timer();
-	static Process processInCS;
-	static int counter = 0;
+	Timer t = new Timer();
+	Process processInCS;
+	int counter = 0;
 	Thread processThreadArray[] = new Thread[4];
-	public static String scheduler;
-	static Boolean status = false;
+	Scheduler s;
+	Boolean status = false;
 	Semaphore semaphore = new Semaphore();
+	String scheduler;
+	Dispatcher dispatcher;
 
-//CPu tells Dispatcher there are no processes running, from that, the Dispatcher should send another profess from the Scheduler to the cpu
-	// When process is recieved from Dispatcher, remove its PCB and itself from the
+//CPu tells dispatcher there are no processes running, from that, the dispatcher should send another profess from the Scheduler to the cpu
+	// When process is recieved from dispatcher, remove its PCB and itself from the
 	// jobQueue and pcblist
 	@Override
 	public void run() {
@@ -53,8 +55,8 @@ public class CPU extends Thread {
 			}
 
 		};
-		CPU.t.scheduleAtFixedRate(tt, 10000, 10000);
-		if (CPU.inCS) {
+		t.scheduleAtFixedRate(tt, 10000, 10000);
+		if (inCS) {
 			processThreadArray[0] = new Thread(dispatchProcess());
 			for (int i = 1; i < 4; i++) {
 				processThreadArray[i] = new Thread(dispatchProcess());
@@ -96,11 +98,11 @@ public class CPU extends Thread {
 		Process process;
 		// Grabs from the ready queue if the waiting queue is empty(Usually when the cpu
 		// is first initiated)
-		if (Dispatcher.getWaitingQueue().isEmpty() && !Dispatcher.getReadyQueue().isEmpty()) {
-			process = Dispatcher.getProcess();
+		if (dispatcher.getWaitingQueue().isEmpty() && !dispatcher.getReadyQueue().isEmpty()) {
+			process = dispatcher.getProcess();
 			runnableProcess = process;
 			if (process != null) {
-				if (CPU.status) {
+				if (this.status) {
 					System.out.println("						The waiting queue is empty, grabbing "
 							+ process.getProcessName() + " from the ready queue");
 				}
@@ -115,9 +117,9 @@ public class CPU extends Thread {
 			 * ready queue. This is needed just in-case there aren't enough signal calls to
 			 * pull all the Processes out of its own waiting queue
 			 */
-		} else if (Dispatcher.getWaitingQueue().isEmpty() && Dispatcher.getReadyQueue().isEmpty()) {
+		} else if (dispatcher.getWaitingQueue().isEmpty() && dispatcher.getReadyQueue().isEmpty()) {
 			semaphore.signal();
-			process = Dispatcher.getProcess();
+			process = dispatcher.getProcess();
 			runnableProcess = process;
 			if (process != null) {
 				if (status) {
@@ -133,7 +135,7 @@ public class CPU extends Thread {
 			 * Grabs the process in the waiting queue since the queue isnt empty
 			 */
 		} else {
-			process = Dispatcher.getProcessFromWaitingQueue();
+			process = dispatcher.getProcessFromWaitingQueue();
 			runnableProcess = process;
 			if (process != null) {
 				if (status) {
@@ -155,10 +157,10 @@ public class CPU extends Thread {
 		int CS;
 		int CE;
 
-		// The PCB should be updated from the Dispatcher class once its sent over there
+		// The PCB should be updated from the dispatcher class once its sent over there
 		// This is so that the current pcb has information on the counters from when it
-		// was sent to the Dispatcher
-		pcb = CPU.pcbList.get(process.getPID());
+		// was sent to the dispatcher
+		pcb = this.pcbList.get(process.getPID());
 		pcb.setState(STATE.RUN);
 		commands = process.getCommands();
 		CS = process.getCritStart();
@@ -167,7 +169,7 @@ public class CPU extends Thread {
 		Runnable runnableProcess;
 		int randomNum = (int) Math.floor(Math.random() * (100 - 0 + 1) + 0);
 		if (randomNum == 1) {
-			if (CPU.status) {
+			if (status) {
 				System.out.println("Process is put to sleep");
 			}
 			Thread.sleep(10);
@@ -177,7 +179,7 @@ public class CPU extends Thread {
 				System.out.println(process.getProcessName()
 						+ " has been sent to the waiting queue because the first command is a I/O instruction");
 			}
-			Dispatcher.addToWaitingQueue(process, pcb);
+			dispatcher.addToWaitingQueue(process, pcb);
 			runnableProcess = dispatchProcess();
 			currentThread = new Thread(runnableProcess);
 			if (runnableProcess != null)
@@ -187,7 +189,7 @@ public class CPU extends Thread {
 
 		
 
-		Scheduler s = new Scheduler();
+	
 		if (scheduler.equals("RR"))
 			s.run(process);
 		
@@ -206,7 +208,7 @@ public class CPU extends Thread {
 				if (semaphore.list.contains(process)) {
 					break;
 				} else {
-					CPU.inCS = true;
+					inCS = true;
 				}
 
 			}
@@ -233,8 +235,8 @@ public class CPU extends Thread {
 									+ pcb.getProcess().getProcessName() + " has called signal()");
 						}
 						semaphore.signal();
-						CPU.inCS = false;
-						CPU.pcbList.put(pcb.getProcessPID(), pcb);
+						inCS = false;
+						this.pcbList.put(pcb.getProcessPID(), pcb);
 					} else {
 						break;
 					}
@@ -244,7 +246,7 @@ public class CPU extends Thread {
 								+ pcb.programCounter.getCommandCounter());
 					}
 					pcb.programCounter.incrementProgramCycle();
-					CPU.pcbList.put(pcb.getProcessPID(), pcb);
+					this.pcbList.put(pcb.getProcessPID(), pcb);
 					if (status) {
 						System.out.println("On " + pcb.programCounter.getCyclesRan() + "/"
 								+ commands.get(pcb.programCounter.getCommandCounter() - 1).cycle + " cycle");
@@ -259,13 +261,13 @@ public class CPU extends Thread {
 			// If the process is out of commands to run
 			if (pcb.programCounter.getCommandCounter() > commands.size()) {
 				pcb.setState(STATE.EXIT);
-				CPU.pcbList.put(pcb.getProcessPID(), pcb);
+				this.pcbList.put(pcb.getProcessPID(), pcb);
 				// System.out.println(pcb.getChildPID());
 				if (pcbList.get(pcb.getChildPID()) != null) {
 					PCB childPCB = pcbList.get(pcb.getChildPID());
 					childPCB.programCounter.setCounter(3);
 					childPCB.setState(STATE.EXIT);
-					CPU.pcbList.put(childPCB.getProcessPID(), childPCB);
+					this.pcbList.put(childPCB.getProcessPID(), childPCB);
 					if (status) {
 						System.out.println(process.getProcessName() + " and its child "
 								+ childPCB.getProcess().getProcessName() + "has been terminated");
@@ -277,7 +279,7 @@ public class CPU extends Thread {
 						System.out.println(process.getProcessName() + " been terminated");
 					}
 				}
-				if (!Dispatcher.getReadyQueue().isEmpty() || !Dispatcher.getWaitingQueue().isEmpty()
+				if (!dispatcher.getReadyQueue().isEmpty() || !dispatcher.getWaitingQueue().isEmpty()
 						|| !semaphore.list.isEmpty()) {
 					// System.out.println(" Thread is being re assigned from the terminated stage");
 					runnableProcess = dispatchProcess();
@@ -288,7 +290,7 @@ public class CPU extends Thread {
 				// if it ran all its cycles but not all of the commands, add it to the respected
 				// queue based on the next command
 			}
-			if (CPU.pcbList.get(process.getPID()).getState() != STATE.EXIT) {
+			if (this.pcbList.get(process.getPID()).getState() != STATE.EXIT) {
 				Command nextCommand = commands.get(pcb.programCounter.getCommandCounter() - 1);
 
 				if (pcb.programCounter.getCyclesRan() < nextCommand.cycle) {
@@ -298,18 +300,18 @@ public class CPU extends Thread {
 							System.out.println(process.getProcessName()
 									+ " has been sent to the waiting queue because the next command is an I/O command");
 						}
-						Dispatcher.addToWaitingQueue(process, pcb);
+						dispatcher.addToWaitingQueue(process, pcb);
 					} else {
 						// if there are still cycles to be ran in the current command and the command is
 						// Calculate
 						// Dont need to increment the program counter if the process still have cycles
 						// to run but the pcb needs to be updated
-						// in the Dispatcher class
+						// in the dispatcher class
 						if (status) {
 							System.out.println(process.getProcessName()
 									+ " has been sent to the ready queue because the next command is an calculate command");
 						}
-						Dispatcher.addToReadyQueue(process, pcb);
+						dispatcher.addToReadyQueue(process, pcb);
 					}
 				}
 				// Process is on its last command
@@ -322,7 +324,7 @@ public class CPU extends Thread {
 								System.out.println(process.getProcessName()
 										+ " is on its last command and has been sent to the ready queue based on the next command");
 							}
-							Dispatcher.addToReadyQueue(process, pcb);
+							dispatcher.addToReadyQueue(process, pcb);
 
 							// break;
 						} else {
@@ -330,7 +332,7 @@ public class CPU extends Thread {
 								System.out.println(process.getProcessName()
 										+ " is on its last command has been sent to the waiting queue");
 							}
-							Dispatcher.addToWaitingQueue(process, pcb);
+							dispatcher.addToWaitingQueue(process, pcb);
 							// break;
 						}
 
@@ -346,8 +348,8 @@ public class CPU extends Thread {
 			}
 			/*
 			 * System.out.println("finished"); System.out.println("The ready queue: " +
-			 * Dispatcher.getReadyQueue()); System.out.println("The waiting queue: " +
-			 * Dispatcher.getWaitingQueue());
+			 * dispatcher.getReadyQueue()); System.out.println("The waiting queue: " +
+			 * dispatcher.getWaitingQueue());
 			 */
 			// }
 			// in a couple of cycles, increment the priorities of all processes
@@ -359,23 +361,23 @@ public class CPU extends Thread {
 
 	}
 
-	public static void print() {
+	public  void print() {
 
 		System.out.println("All processes:");
 		for (Process p : processes) {
-			double percentage = (((double) CPU.pcbList.get(p.getPID()).programCounter.getCommandCounter() - 1)
+			double percentage = (((double) this.pcbList.get(p.getPID()).programCounter.getCommandCounter() - 1)
 					/ p.getCommands().size()) * 100;
 			System.out.println(p.getProcessName() + " " + percentage + "% completed");
-			System.out.println("     State: " + CPU.pcbList.get(p.getPID()).getState());
+			System.out.println("     State: " + this.pcbList.get(p.getPID()).getState());
 		}
 	}
 
-	public static PCB getPCB(Long pid) {
-		return CPU.pcbList.get(pid);
+	public PCB getPCB(Long pid) {
+		return this.pcbList.get(pid);
 	}
 
 	public void addToProcessQueue(Process p) {
-		CPU.processes.add(p);
+		processes.add(p);
 
 		// System.out.println(Scheduler.getProcess());
 
@@ -388,28 +390,28 @@ public class CPU extends Thread {
 	}
 
 	public void addPCB(PCB pcb) {
-		CPU.pcbList.put(pcb.getProcessPID(), pcb);
+		this.pcbList.put(pcb.getProcessPID(), pcb);
 
 	}
 
 	public HashMap<Long, PCB> getPCBList() {
-		return CPU.pcbList;
+		return this.pcbList;
 	}
 
-	public static void updatePCBList(Process p, PCB pcb) {
-		CPU.pcbList.put(p.getPID(), pcb);
+	public  void updatePCBList(Process p, PCB pcb) {
+		this.pcbList.put(p.getPID(), pcb);
 	}
 
 	public Queue<Process> getJobQueue() {
-		return CPU.processes;
+		return processes;
 	}
 
 	public void setPCBList(HashMap<Long, PCB> pcbList) {
-		CPU.pcbList = pcbList;
+		this.pcbList = pcbList;
 	}
 
-	public static void updatePCBList(PCB pcb) {
-		CPU.pcbList.put(pcb.getProcessPID(), pcb);
+	public  void updatePCBList(PCB pcb) {
+		this.pcbList.put(pcb.getProcessPID(), pcb);
 	}
 
 	public void addToCompareQueue(Process p) {
@@ -441,22 +443,22 @@ public class CPU extends Thread {
 		};
 		compareTimer.schedule(compareTimerTask, 30);
 		// Using round robin first
-		while (compare && !Dispatcher.getReadyQueue().isEmpty()) {
+		while (compare && !dispatcher.getReadyQueue().isEmpty()) {
 
-			Process p = Dispatcher.getProcess();
+			Process p = dispatcher.getProcess();
 			if (p != null) {
 				// System.out.println(p);
 				PCB pcb = comparePCBList.get(p.getPID());
 				ArrayList<Command> commands = p.getCommands();
-				Scheduler s = new Scheduler();
+				Scheduler s = new Scheduler(this);
 				s.run(p);
 				while (s.getQuantumStatus() && pcb.programCounter.getCyclesRan() < commands.get(0).cycle) {
 					pcb.programCounter.incrementProgramCycle();
 					totalCyclesRanForRR++;
-					CPU.comparePCBList.put(pcb.getProcessPID(), pcb);
+					comparePCBList.put(pcb.getProcessPID(), pcb);
 
 					if (pcb.programCounter.getCyclesRan() < commands.get(0).cycle) {
-						Dispatcher.addToReadyQueue(p, pcb);
+						dispatcher.addToReadyQueue(p, pcb);
 					}
 				}
 
@@ -481,8 +483,8 @@ public class CPU extends Thread {
 		};
 		compareTimer.schedule(compareTimerTask, 30);
 		// Using round robin first
-		while (compare && !Dispatcher.getReadyQueue().isEmpty()) {
-			Process p = Dispatcher.getProcess();
+		while (compare && !dispatcher.getReadyQueue().isEmpty()) {
+			Process p = dispatcher.getProcess();
 			if (p != null) {
 				PCB pcb = comparePCBList.get(p.getPID());
 				ArrayList<Command> commands = p.getCommands();
@@ -490,7 +492,7 @@ public class CPU extends Thread {
 				while (pcb.programCounter.getCyclesRan() < commands.get(0).cycle) {
 					pcb.programCounter.incrementProgramCycle();
 					totalCyclesRanForPQ++;
-					CPU.comparePCBList.put(pcb.getProcessPID(), pcb);
+					comparePCBList.put(pcb.getProcessPID(), pcb);
 				}
 			}
 		}
@@ -499,9 +501,17 @@ public class CPU extends Thread {
 
 	}
 
-	public static void updateComparePCBList(Process p, PCB pcb) {
+	public void updateComparePCBList(Process p, PCB pcb) {
 		comparePCBList.put(p.getPID(), pcb);
 
+	}
+	
+	public void setScheduler(Scheduler s) {
+		this.s = s;
+	}
+
+	public void setDispatcher(Dispatcher dispatcher) {
+		this.dispatcher = dispatcher;
 	}
 
 }
