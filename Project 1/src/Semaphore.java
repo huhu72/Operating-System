@@ -2,51 +2,55 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class Semaphore {
-	static int value = 1;
-	public static Queue<Process> list = new LinkedList<Process>();
+	int value = 1;
+	public Queue<Process> list = new LinkedList<Process>();
 
-	// Semaphore methods
-	// S is the semaphore the process has, P is the process thats calling this
-	// method
-
-	/// All of the below should belong in the semaphore class
-	public static synchronized void wait(Process P) {
-		if(CPU.status)System.out.println("										"+P.getProcessName() + " called wait()");
-		Semaphore.value--;
-		if (Semaphore.value < 0) {
-			Semaphore.list.add(P);
+	/// All of the below should belong in the this class
+	public synchronized void wait(Process P) {
+		this.value--;
+		if (this.value < 0) {
+			this.list.add(P);
 			block(P);
-			if(CPU.status)	System.out.println(P.getProcessName() + "has been sent to the semaphore waiting queue since S < 0");
+			// System.out.println(P.getProcessName() + "has been sent to the semaphore
+			// waiting queue since S < 0");
 		}
 	}
 
-	public static synchronized void signal() {
-		
-		Semaphore.value++;
-		if (Semaphore.value <= 0) {
-			Process P = Semaphore.list.poll();
+	public synchronized void signal() {
+		this.value++;
+		if (this.value <= 0) {
+			Process P = this.list.poll();
 			wakeUp(P);
-			if(CPU.status)System.out.println(P.getProcessName() + "has been put back into the ready queue");
+			// System.out.println(P.getProcessName() + "has been put back into the ready
+			// queue");
 		}
 	}
 
-	private static void wakeUp(Process P) {
+	private void wakeUp(Process P) {
 		PCB pcb = CPU.getPCB(P.getPID());
 		pcb.setState(STATE.READY);
 		CPU.updatePCBList(pcb);
-		Dispatcher.addToReadyQueue(P, pcb);
+		Scheduler.addToPQ(P);
+		notify();
+
 	}
 
-	private static void block(Process p) {
-		Semaphore.list = Scheduler.sortSemaphoreWaitingQueue(Semaphore.list);
+	private void block(Process p) {
+		this.list = Scheduler.sortSemaphoreWaitingQueue(this.list);
 		PCB pcb = CPU.getPCB(p.getPID());
 		pcb.setState(STATE.WAIT);
 		CPU.updatePCBList(pcb);
+		try {
+			wait();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public void print() {
 		System.out.println("All processes:");
-		for (Process p : Semaphore.list) {
+		for (Process p : this.list) {
 			System.out.println(p.getProcessName() + " Priority: " + p.priority);
 
 		}

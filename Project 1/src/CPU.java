@@ -30,6 +30,7 @@ public class CPU extends Thread {
 	Thread processThreadArray[] = new Thread[4];
 	public static String scheduler;
 	static Boolean status = false;
+	Semaphore semaphore = new Semaphore();
 
 //CPu tells Dispatcher there are no processes running, from that, the Dispatcher should send another profess from the Scheduler to the cpu
 	// When process is recieved from Dispatcher, remove its PCB and itself from the
@@ -90,7 +91,7 @@ public class CPU extends Thread {
 
 	}
 
-	public static Runnable dispatchProcess() {
+	public Runnable dispatchProcess() {
 		Runnable runnableProcess;
 		Process process;
 		// Grabs from the ready queue if the waiting queue is empty(Usually when the cpu
@@ -115,7 +116,7 @@ public class CPU extends Thread {
 			 * pull all the Processes out of its own waiting queue
 			 */
 		} else if (Dispatcher.getWaitingQueue().isEmpty() && Dispatcher.getReadyQueue().isEmpty()) {
-			Semaphore.signal();
+			semaphore.signal();
 			process = Dispatcher.getProcess();
 			runnableProcess = process;
 			if (process != null) {
@@ -148,7 +149,7 @@ public class CPU extends Thread {
 
 	}
 
-	public static void runProcesses(Process process) throws InterruptedException {
+	public void runProcesses(Process process) throws InterruptedException {
 		PCB pcb;
 		ArrayList<Command> commands;
 		int CS;
@@ -192,17 +193,17 @@ public class CPU extends Thread {
 		
 		while (s.getQuantumStatus()) {
 			
-			if (inCS && Semaphore.list.contains(process)) {
+			if (inCS && semaphore.list.contains(process)) {
 				if (status) {
 					System.out.println("						There is a process in cs");
 				}
 				break;
 			}
 			if (pcb.programCounter.getCommandCounter() == CS && pcb.programCounter.getCyclesRan() == 0) {
-				Semaphore.wait(process);
+				semaphore.wait(process);
 				if (scheduler.equals("RR"))
 					s.killQuantumTimer(process);
-				if (Semaphore.list.contains(process)) {
+				if (semaphore.list.contains(process)) {
 					break;
 				} else {
 					CPU.inCS = true;
@@ -231,7 +232,7 @@ public class CPU extends Thread {
 							System.out.println("												"
 									+ pcb.getProcess().getProcessName() + " has called signal()");
 						}
-						Semaphore.signal();
+						semaphore.signal();
 						CPU.inCS = false;
 						CPU.pcbList.put(pcb.getProcessPID(), pcb);
 					} else {
@@ -253,7 +254,7 @@ public class CPU extends Thread {
 
 		}
 		
-		if (!Semaphore.list.contains(pcb.getProcess())) {
+		if (!semaphore.list.contains(pcb.getProcess())) {
 
 			// If the process is out of commands to run
 			if (pcb.programCounter.getCommandCounter() > commands.size()) {
@@ -277,7 +278,7 @@ public class CPU extends Thread {
 					}
 				}
 				if (!Dispatcher.getReadyQueue().isEmpty() || !Dispatcher.getWaitingQueue().isEmpty()
-						|| !Semaphore.list.isEmpty()) {
+						|| !semaphore.list.isEmpty()) {
 					// System.out.println(" Thread is being re assigned from the terminated stage");
 					runnableProcess = dispatchProcess();
 					currentThread = new Thread(runnableProcess);
@@ -374,7 +375,7 @@ public class CPU extends Thread {
 	}
 
 	public void addToProcessQueue(Process p) {
-		this.processes.add(p);
+		CPU.processes.add(p);
 
 		// System.out.println(Scheduler.getProcess());
 
@@ -387,12 +388,12 @@ public class CPU extends Thread {
 	}
 
 	public void addPCB(PCB pcb) {
-		this.pcbList.put(pcb.getProcessPID(), pcb);
+		CPU.pcbList.put(pcb.getProcessPID(), pcb);
 
 	}
 
 	public HashMap<Long, PCB> getPCBList() {
-		return this.pcbList;
+		return CPU.pcbList;
 	}
 
 	public static void updatePCBList(Process p, PCB pcb) {
@@ -400,7 +401,7 @@ public class CPU extends Thread {
 	}
 
 	public Queue<Process> getJobQueue() {
-		return this.processes;
+		return CPU.processes;
 	}
 
 	public void setPCBList(HashMap<Long, PCB> pcbList) {
