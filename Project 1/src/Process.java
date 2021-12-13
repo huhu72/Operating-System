@@ -190,14 +190,22 @@ public class Process extends CPU implements Runnable {
 		//System.out.println(this.cpu.getCompareQueue());
 
 	}
-
+//Implements multi level child parent relationship
 	public Process fork() throws FileNotFoundException {
+		int min = 1;
+		int max = 500;
+		int randomNum = (int) Math.floor(Math.random() * (max - min + 1) + min);
 		createCommands("child.txt");
 		Process childProcess = new Process("Process" + processCreationCounter, getCommands(),
 				(this.pid + this.pidCounter), this.critStart, this.critEnd);
 		childProcess.setParentPID(this.getPID());
 		this.pidCounter++;
 		this.processCreationCounter++;
+		if (randomNum == 1) {
+			Process grandChildProcess = fork();
+			childProcess.setChildPID(grandChildProcess.getPID());
+		}
+
 		this.cpu.addToProcessQueue(childProcess);
 		PCB childPCB = new PCB(childProcess);
 		childPCB.setParentPID(childProcess.getParentPID());
@@ -208,7 +216,6 @@ public class Process extends CPU implements Runnable {
 	public ArrayList<Command> getCommands() {
 		return this.processCommands;
 	}
-
 	public void showTemplates() {
 		File[] templates = new File("./Templates").listFiles();
 		System.out.println("Here are the available templates:");
@@ -269,7 +276,7 @@ public class Process extends CPU implements Runnable {
 	public void run() {
 
 		try {
-			CPU.runProcesses(this);
+			this.cpu.runProcesses(this);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

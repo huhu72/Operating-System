@@ -185,14 +185,12 @@ public class CPU extends Thread {
 
 		}
 
-		
-
 		Scheduler s = new Scheduler();
 		if (scheduler.equals("RR"))
 			s.run(process);
-		
+
 		while (s.getQuantumStatus()) {
-			
+
 			if (inCS && semaphore.list.contains(process)) {
 				if (status) {
 					System.out.println("						There is a process in cs");
@@ -253,9 +251,9 @@ public class CPU extends Thread {
 			}
 
 		}
-		
-		if (!semaphore.list.contains(pcb.getProcess())) {
 
+		if (!semaphore.list.contains(pcb.getProcess())) {
+			//Cascading termination for multilevel child parent relationship
 			// If the process is out of commands to run
 			if (pcb.programCounter.getCommandCounter() > commands.size()) {
 				pcb.setState(STATE.EXIT);
@@ -263,13 +261,26 @@ public class CPU extends Thread {
 				// System.out.println(pcb.getChildPID());
 				if (pcbList.get(pcb.getChildPID()) != null) {
 					PCB childPCB = pcbList.get(pcb.getChildPID());
-					childPCB.programCounter.setCounter(3);
+					childPCB.programCounter.setCounter(10000);
 					childPCB.setState(STATE.EXIT);
 					CPU.pcbList.put(childPCB.getProcessPID(), childPCB);
-					if (status) {
-						System.out.println(process.getProcessName() + " and its child "
-								+ childPCB.getProcess().getProcessName() + "has been terminated");
-						Process.memoryCount -= process.memory-childPCB.getProcess().memory;
+					if (pcbList.get(pcbList.get(pcb.getChildPID()).getChildPID()) != null) {
+						PCB grandChildPCB = pcbList.get(childPCB.getChildPID());
+						grandChildPCB.programCounter.setCounter(10000);
+						grandChildPCB.setState(STATE.EXIT);
+						CPU.pcbList.put(grandChildPCB.getProcessPID(), grandChildPCB);
+						if (status) {
+							System.out.println(process.getProcessName() + ", its child "
+									+ childPCB.getProcess().getProcessName() + ", and its grandchildren "
+									+ grandChildPCB.getProcess().getProcessName() + " has been terminated");
+							Process.memoryCount -= process.memory - childPCB.getProcess().memory;
+						}
+					} else {
+						if (status) {
+							System.out.println(process.getProcessName() + " and its child "
+									+ childPCB.getProcess().getProcessName() + "has been terminated");
+							Process.memoryCount -= process.memory - childPCB.getProcess().memory;
+						}
 					}
 				} else {
 					if (status) {
@@ -342,7 +353,7 @@ public class CPU extends Thread {
 				if (runnableProcess != null) {
 					currentThread.start();
 				}
-					
+
 			}
 			/*
 			 * System.out.println("finished"); System.out.println("The ready queue: " +
