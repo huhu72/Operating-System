@@ -1,63 +1,93 @@
-
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.awt.Font;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JTextPane;
 
-public class OS {
+public class OS extends JFrame implements ActionListener {
+	private JFrame frame = new JFrame();
+	private JButton runBtn = new JButton("RUN");
+	Font font1 = new Font("SansSerif", Font.BOLD, 20);
+	Font font2 = new Font("SansSerif", Font.PLAIN, 20);
+	JTextPane cpuBoundNum = new JTextPane();
+	JTextPane ioBasedNum = new JTextPane();
+	JTextPane longBasedNum = new JTextPane();
+	JTextPane shortBasedNum = new JTextPane();
+	JButton statusBtn = new JButton("STATUS");
+	static JTextPane info = new JTextPane();
 
-	static Dispatcher dispatcher = new Dispatcher();
-	static CPU cpu = new CPU();
-	static Status status = new Status(cpu);
+	OS() {
+		this.frame.setBounds(200, 200, 950, 360 * 2);
+		this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.frame.getContentPane().setLayout(null);
+
+		JLabel templatePrompt = new JLabel(
+				"Here are a list of available templates, please type how many processes you would like to create ");
+		templatePrompt.setFont(font1);
+		templatePrompt.setBounds(5, 5, 1000, 50);
+		frame.getContentPane().add(templatePrompt);
+
+		JLabel cpuBound = new JLabel("cpubound.txt");
+		cpuBound.setFont(font2);
+		cpuBound.setBounds(5, 40, 800, 50);
+		frame.getContentPane().add(cpuBound);
+
+		cpuBoundNum.setBounds(140, 55, 20, 25);
+		cpuBoundNum.setEditable(true);
+		frame.getContentPane().add(cpuBoundNum);
+
+		JLabel ioBased = new JLabel("iobased.txt");
+		ioBased.setFont(font2);
+		ioBased.setBounds(5, 70, 800, 50);
+		frame.getContentPane().add(ioBased);
+
+		ioBasedNum.setBounds(140, 85, 20, 25);
+		ioBasedNum.setEditable(true);
+		frame.getContentPane().add(ioBasedNum);
+
+		JLabel longBased = new JLabel("longbased.txt");
+		longBased.setFont(font2);
+		longBased.setBounds(5, 100, 800, 50);
+		frame.getContentPane().add(longBased);
+
+		longBasedNum.setBounds(140, 115, 20, 25);
+		longBasedNum.setEditable(true);
+		frame.getContentPane().add(longBasedNum);
+
+		JLabel shortBased = new JLabel("shortbased.txt");
+		shortBased.setFont(font2);
+		shortBased.setBounds(5, 130, 800, 50);
+		frame.getContentPane().add(shortBased);
+
+		shortBasedNum.setBounds(140, 145, 20, 25);
+		shortBasedNum.setEditable(true);
+		frame.getContentPane().add(shortBasedNum);
+
+		runBtn.setBounds(30, 170, 100, 50);
+		runBtn.addActionListener(this);
+		frame.getContentPane().add(runBtn);
+
+		statusBtn.setBounds(30, 230, 100, 50);
+		statusBtn.addActionListener(this);
+		frame.getContentPane().add(statusBtn);
+
+		info.setBounds(200, 50, 700, 500);
+		info.setEditable(false);
+		frame.getContentPane().add(info);
+
+	}
 
 	public static void main(String[] args) {
-
-		Process p = new Process(cpu);
-		try {
-			p.createCompareProcesses();
-		} catch (FileNotFoundException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		// Get total number of cycles in all 100 processes that will be used to compare
-		// the schedulers
-		
-		Dispatcher.setPCBList(cpu.getComparePCBList());
-		Dispatcher.setReadyQueue(cpu.getCompareQueue());
-		
-		int RRCycles = cpu.compareRR();
-		cpu.compareQueue = new LinkedList<Process>();
-		CPU.comparePCBList = new HashMap<>();
-		try {
-			p.createCompareProcesses();
-		} catch (FileNotFoundException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}		
-		Dispatcher.setPCBList(cpu.getComparePCBList());
-		Dispatcher.setReadyQueue(cpu.getCompareQueue());
-		int PQCycles = cpu.comparePQ();
-		if(RRCycles < PQCycles) {
-			CPU.scheduler = "PQ";
-			
-		}else {
-			CPU.scheduler = "RR";
-		
-		}
-		
-		try {
-			p.createProcessesPrompt();
-		} catch (FileNotFoundException e) {
-
-			e.printStackTrace();
-		}
-		// statusThread.start();
-		Dispatcher.setPCBList(cpu.getPCBList());
-		Dispatcher.setReadyQueue(cpu.getJobQueue());
-
-		cpu.start();
+		OS gui = new OS();
+		gui.pack();
+		gui.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		gui.frame.setLocationRelativeTo(null);
+		gui.frame.setVisible(true);
 
 		/*
 		 * for(Process p1 : dispatcher.getReadyQueue()) { System.out.println(p1); }
@@ -65,82 +95,81 @@ public class OS {
 
 	}
 
-	/*
-	 * public void runCommand() { Process process; PCB pcb; ArrayList<Command>
-	 * commands;
-	 * 
-	 * while (!dispatcher.getReadyQueue().isEmpty() ||
-	 * !dispatcher.getWaitingQueue().isEmpty()) {
-	 * 
-	 * // Only works for running processes one at a time. Logic Process 1 gets to
-	 * the // I/O command // Process 1 -> waiting queue. The waiting queue is no
-	 * longer empty so it will // pull the process from there if
-	 * (dispatcher.getWaitingQueue().isEmpty()) process = dispatcher.getProcess();
-	 * else process = dispatcher.getProcessFromWaitingQueue(); // The PCB should be
-	 * updated from the dispatcher class once its sent over there // This is so that
-	 * the current pcb has information on the counters from when it // was sent to
-	 * the dispatcher pcb = pcbList.get(process.getPID()); commands =
-	 * process.getCommands(); if (commands.get(0).command.equals("I/O") &&
-	 * pcb.programCounter.getCounter() == 1) {
-	 * //System.out.println(process.getProcessName() +
-	 * " has been sent to the waiting queue"); dispatcher.addToWaitingQueue(process,
-	 * pcb); break; } System.out.println("Running " + process.getProcessName()); //
-	 * while (pcb.getProgramCounter() <= process.getCommands().size()) { for (int i
-	 * = pcb.getProgramCounter(); i <= commands.size(); i++) {
-	 * 
-	 * System.out.println("Running " + commands.get(i - 1).command);
-	 * System.out.println("On Command: " + pcb.getProgramCounter() + "/" +
-	 * commands.size()); //scheduler.startQuantumClock(); while
-	 * (scheduler.quantumStatus) {
-	 * 
-	 * // getPCB(process.getPID()).getProgramCounter() - 1; // If the process runs
-	 * all of the cyles in the command, it will increament the // program counter //
-	 * and exit out of the loop if (pcb.programCounter.getCyclesRan() ==
-	 * commands.get(i - 1).cycle) { pcb.programCounter.incrementProgramCounter();
-	 * pcb.programCounter.setCyclesRan(0); //i = pcb.programCounter.getCounter();
-	 * break; }
-	 * 
-	 * pcb.programCounter.incrementProgramCycle(); System.out.println( "On " +
-	 * pcb.programCounter.getCyclesRan() + "/" + commands.get(i - 1).cycle +
-	 * " cycle");
-	 * 
-	 * } scheduler.quantumStatus = true; // If the process has ran all the commands,
-	 * add it to the terminated list if (pcb.programCounter.getCounter() >
-	 * commands.size()) { pcb.setState(STATE.EXIT); pcbList.put(pcb.getProcessPID(),
-	 * pcb);
-	 * 
-	 * System.out.println(process.getProcessName() + " has been terminated"); break;
-	 * // if it ran all its cycles but not all of the commands add it to the
-	 * respected // queue based on the next command } else if
-	 * (pcb.programCounter.getCyclesRan() < commands.get(i - 1).cycle &&
-	 * commands.get(i - 1).command.equals("I/O")) {
-	 * System.out.println(process.getProcessName() +
-	 * " has been sent to the waiting queue"); dispatcher.addToWaitingQueue(process,
-	 * pcb); break;
-	 * 
-	 * // if there are still cycles to be ran in the current command and the command
-	 * is // Calculate // Dont need to increment the program counter if the process
-	 * still have cycles // to run but the pcb needs to be updated // in the
-	 * dispatcher class } else if (pcb.programCounter.getCyclesRan() <
-	 * commands.get(i - 1).cycle && commands.get(i - 1).command.equals("CALCULATE"))
-	 * { System.out.println(process.getProcessName() +
-	 * " has been sent to the ready queue"); dispatcher.addToReadyQueue(process,
-	 * pcb); break; // if there are still cycles to be ran in the current command
-	 * and the command is // Calculate } else { if (commands.get(i) != null) {
-	 * Command nextCommand = commands.get(i - 1);
-	 * pcb.programCounter.setCyclesRan(0); if
-	 * (nextCommand.command.equals("CALCULATE")) {
-	 * System.out.println(process.getProcessName() +
-	 * " has been sent to the ready queue based on the next command");
-	 * dispatcher.addToReadyQueue(process, pcb); //break; } else {
-	 * System.out.println(process.getProcessName() +
-	 * " has been sent to the waiting  queue");
-	 * dispatcher.addToWaitingQueue(process, pcb); //break; } } break; }
-	 * 
-	 * }
-	 * 
-	 * //} // in a couple of cycles, increment the priorities of all processes
-	 * //break; } print(); }
-	 */
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		Dispatcher dispatcher = new Dispatcher();
+		CPU cpu = new CPU();
+		CPU cpu2 = new CPU();
+
+		if (e.getSource() == runBtn) {
+			if (cpuBoundNum.getText().equals("")) {
+				cpuBoundNum.setText("0");
+			}
+			if (ioBasedNum.getText().equals("")) {
+				ioBasedNum.setText("0");
+			}
+			if (longBasedNum.getText().equals("")) {
+				longBasedNum.setText("0");
+			}
+			if (shortBasedNum.getText().equals("")) {
+				shortBasedNum.setText("0");
+			}
+			int[] templateNums = { Integer.parseInt(cpuBoundNum.getText()), Integer.parseInt(ioBasedNum.getText()),
+					Integer.parseInt(longBasedNum.getText()), Integer.parseInt(shortBasedNum.getText()) };
+			Process p = new Process(cpu);
+			try {
+				p.createCompareProcesses();
+			} catch (FileNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			// Get total number of cycles in all 100 processes that will be used to compare
+			// the schedulers
+
+			Dispatcher.setPCBList(cpu.getComparePCBList());
+			Dispatcher.setReadyQueue(cpu.getCompareQueue());
+
+			int RRCycles = cpu.compareRR();
+			cpu.compareQueue = new LinkedList<Process>();
+			CPU.comparePCBList = new HashMap<>();
+			try {
+				p.createCompareProcesses();
+			} catch (FileNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			Dispatcher.setPCBList(cpu.getComparePCBList());
+			Dispatcher.setReadyQueue(cpu.getCompareQueue());
+			int PQCycles = cpu.comparePQ();
+			if (RRCycles < PQCycles) {
+				CPU.scheduler = "PQ";
+
+			} else {
+				CPU.scheduler = "RR";
+
+			}
+
+			try {
+				p.createProcessesPrompt(templateNums);
+			} catch (FileNotFoundException e1) {
+
+				e1.printStackTrace();
+			}
+			// statusThread.start();
+			Dispatcher.setPCBList(cpu.getPCBList());
+			Dispatcher.setReadyQueue(cpu.getJobQueue());
+		
+			Semaphore s1 = new Semaphore();
+			Semaphore s2 = new Semaphore();
+			cpu.setSemaphore(s1);
+			cpu2.setSemaphore(s2);
+			cpu.start();
+			cpu2.start();
+		} else {
+			CPU.status = true;
+			cpu.print();
+		}
+
+	}
 
 }

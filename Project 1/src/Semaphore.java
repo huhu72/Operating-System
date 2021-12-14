@@ -51,7 +51,7 @@ public class Semaphore {
 	public void print() {
 		System.out.println("All processes:");
 		for (Process p : this.list) {
-			System.out.println(p.getProcessName() + " Priority: " + p.priority);
+			OS.info.setText(OS.info.getText() + "\n" + p.getProcessName() + " Priority: " + p.priority);
 
 		}
 	}

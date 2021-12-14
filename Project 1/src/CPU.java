@@ -30,14 +30,14 @@ public class CPU extends Thread {
 	Thread processThreadArray[] = new Thread[4];
 	public static String scheduler;
 	static Boolean status = false;
-	Semaphore semaphore = new Semaphore();
+	Semaphore semaphore;
 
 //CPu tells Dispatcher there are no processes running, from that, the Dispatcher should send another profess from the Scheduler to the cpu
 	// When process is recieved from Dispatcher, remove its PCB and itself from the
 	// jobQueue and pcblist
 	@Override
 	public void run() {
-
+	
 		// System.out.println("running");
 		TimerTask tt = new TimerTask() {
 
@@ -49,7 +49,7 @@ public class CPU extends Thread {
 					it.next().scheduleInfo.incrementPriority();
 				}
 				if (status)
-					System.out.println("Priority has been incremented");
+					OS.info.setText(OS.info.getText() + "\nPriority has been incremented");
 			}
 
 		};
@@ -79,7 +79,8 @@ public class CPU extends Thread {
 				if (processThreadArray[randomNum].getState() == Thread.State.TIMED_WAITING) {
 					processThreadArray[randomNum].interrupt();
 					if (status) {
-						System.out.println("Interrupt thrown");
+						OS.info.setText(OS.info.getText() + "\nInterrupt thrown");
+
 					}
 				}
 
@@ -91,18 +92,20 @@ public class CPU extends Thread {
 
 	}
 
-	public Runnable dispatchProcess() {
+	public synchronized Runnable dispatchProcess() {
 		Runnable runnableProcess;
 		Process process;
 		// Grabs from the ready queue if the waiting queue is empty(Usually when the cpu
 		// is first initiated)
 		if (Dispatcher.getWaitingQueue().isEmpty() && !Dispatcher.getReadyQueue().isEmpty()) {
 			process = Dispatcher.getProcess();
-			runnableProcess = process;
 			if (process != null) {
+				process.setCpu(this);
+				runnableProcess = process;
 				if (CPU.status) {
-					System.out.println("						The waiting queue is empty, grabbing "
+					OS.info.setText(OS.info.getText() + "\nThe waiting queue is empty, grabbing "
 							+ process.getProcessName() + " from the ready queue");
+
 				}
 				return runnableProcess;
 			} else {
@@ -118,12 +121,14 @@ public class CPU extends Thread {
 		} else if (Dispatcher.getWaitingQueue().isEmpty() && Dispatcher.getReadyQueue().isEmpty()) {
 			semaphore.signal();
 			process = Dispatcher.getProcess();
-			runnableProcess = process;
+
 			if (process != null) {
+				process.setCpu(this);
+				runnableProcess = process;
 				if (status) {
-					System.out
-							.println("						The waiting and ready queue is empty is empty, grabbing "
-									+ process.getProcessName() + " from the ready queue after calling signal");
+					OS.info.setText(OS.info.getText() + "\nThe waiting and ready queue is empty is empty, grabbing "
+							+ process.getProcessName() + " from the ready queue after calling signal");
+
 				}
 				return runnableProcess;
 			} else {
@@ -134,11 +139,13 @@ public class CPU extends Thread {
 			 */
 		} else {
 			process = Dispatcher.getProcessFromWaitingQueue();
-			runnableProcess = process;
+
 			if (process != null) {
+				process.setCpu(this);
+				runnableProcess = process;
 				if (status) {
-					System.out.println(
-							"						Grabbing " + process.getProcessName() + " from the wating queue");
+					OS.info.setText(
+							OS.info.getText() + "\nGrabbing " + process.getProcessName() + " from the wating queue");
 				}
 				return runnableProcess;
 			} else {
@@ -168,13 +175,13 @@ public class CPU extends Thread {
 		int randomNum = (int) Math.floor(Math.random() * (100 - 0 + 1) + 0);
 		if (randomNum == 1) {
 			if (CPU.status) {
-				System.out.println("Process is put to sleep");
+				OS.info.setText(OS.info.getText() + "\nProcess is put to sleep");
 			}
 			Thread.sleep(10);
 		}
 		if (commands.get(0).command.equals("I/O") && pcb.programCounter.getCommandCounter() == 1) {
 			if (status) {
-				System.out.println(process.getProcessName()
+				OS.info.setText(OS.info.getText() + "\n" + process.getProcessName()
 						+ " has been sent to the waiting queue because the first command is a I/O instruction");
 			}
 			Dispatcher.addToWaitingQueue(process, pcb);
@@ -186,15 +193,13 @@ public class CPU extends Thread {
 		}
 
 		Scheduler s = new Scheduler();
-		if (scheduler.equals("RR"))
-			s.run(process);
+
+		s.run(process);
 
 		while (s.getQuantumStatus()) {
 
 			if (inCS && semaphore.list.contains(process)) {
-				if (status) {
-					System.out.println("						There is a process in cs");
-				}
+				// System.out.println(" There is a process in cs");
 				break;
 			}
 			if (pcb.programCounter.getCommandCounter() == CS && pcb.programCounter.getCyclesRan() == 0) {
@@ -221,14 +226,16 @@ public class CPU extends Thread {
 					pcb.programCounter.setCyclesRan(0);
 					pcbList.put(pcb.getProcessPID(), pcb);
 					if (status) {
-						System.out.println(
-								process.getProcessName() + " has ran all cycles before the quantum time ran out and "
-										+ process.getProcessName() + " timer has been killed");
+						OS.info.setText(OS.info.getText() + "\n" + process.getProcessName()
+								+ " has ran all cycles before the quantum time ran out and " + process.getProcessName()
+								+ " timer has been killed");
+
 					}
 					if (pcb.programCounter.getCommandCounter() == CE) {
 						if (status) {
-							System.out.println("												"
-									+ pcb.getProcess().getProcessName() + " has called signal()");
+							OS.info.setText(OS.info.getText() + "\n" + pcb.getProcess().getProcessName()
+									+ " has called signal()");
+
 						}
 						semaphore.signal();
 						CPU.inCS = false;
@@ -237,23 +244,25 @@ public class CPU extends Thread {
 						break;
 					}
 				} else {
-					if (status) {
-						System.out.println("Command for " + process.getProcessName() + ": "
-								+ pcb.programCounter.getCommandCounter());
-					}
+					/*
+					 * System.out.println("Command for " + process.getProcessName() + ": " +
+					 * pcb.programCounter.getCommandCounter());
+					 */
+
 					pcb.programCounter.incrementProgramCycle();
 					CPU.pcbList.put(pcb.getProcessPID(), pcb);
-					if (status) {
-						System.out.println("On " + pcb.programCounter.getCyclesRan() + "/"
-								+ commands.get(pcb.programCounter.getCommandCounter() - 1).cycle + " cycle");
-					}
+
+					/*
+					 * System.out.println("On " + pcb.programCounter.getCyclesRan() + "/" +
+					 * commands.get(pcb.programCounter.getCommandCounter() - 1).cycle + " cycle");
+					 */
 				}
 			}
 
 		}
 
 		if (!semaphore.list.contains(pcb.getProcess())) {
-			//Cascading termination for multilevel child parent relationship
+			// Cascading termination for multilevel child parent relationship
 			// If the process is out of commands to run
 			if (pcb.programCounter.getCommandCounter() > commands.size()) {
 				pcb.setState(STATE.EXIT);
@@ -270,22 +279,25 @@ public class CPU extends Thread {
 						grandChildPCB.setState(STATE.EXIT);
 						CPU.pcbList.put(grandChildPCB.getProcessPID(), grandChildPCB);
 						if (status) {
-							System.out.println(process.getProcessName() + ", its child "
+							OS.info.setText(OS.info.getText() + "\n" + process.getProcessName() + ", its child "
 									+ childPCB.getProcess().getProcessName() + ", and its grandchildren "
 									+ grandChildPCB.getProcess().getProcessName() + " has been terminated");
-							Process.memoryCount -= process.memory - childPCB.getProcess().memory;
 						}
+						Process.memoryCount -= process.memory - childPCB.getProcess().memory
+								- grandChildPCB.getProcess().memory;
 					} else {
 						if (status) {
-							System.out.println(process.getProcessName() + " and its child "
+							OS.info.setText(OS.info.getText() + "\n" + process.getProcessName() + " and its child "
 									+ childPCB.getProcess().getProcessName() + "has been terminated");
-							Process.memoryCount -= process.memory - childPCB.getProcess().memory;
+
 						}
+						Process.memoryCount -= process.memory - childPCB.getProcess().memory;
 					}
 				} else {
+					Process.memoryCount -= process.memory;
 					if (status) {
-						Process.memoryCount -= process.memory;
-						System.out.println(process.getProcessName() + " been terminated");
+
+						OS.info.setText(OS.info.getText() + "\n" + process.getProcessName() + " been terminated");
 					}
 				}
 				if (!Dispatcher.getReadyQueue().isEmpty() || !Dispatcher.getWaitingQueue().isEmpty()
@@ -306,7 +318,7 @@ public class CPU extends Thread {
 
 					if (nextCommand.command.equals("I/O")) {
 						if (status) {
-							System.out.println(process.getProcessName()
+							OS.info.setText(OS.info.getText() + "\n" + process.getProcessName()
 									+ " has been sent to the waiting queue because the next command is an I/O command");
 						}
 						Dispatcher.addToWaitingQueue(process, pcb);
@@ -317,8 +329,9 @@ public class CPU extends Thread {
 						// to run but the pcb needs to be updated
 						// in the Dispatcher class
 						if (status) {
-							System.out.println(process.getProcessName()
+							OS.info.setText(OS.info.getText() + "\n" + process.getProcessName()
 									+ " has been sent to the ready queue because the next command is an calculate command");
+
 						}
 						Dispatcher.addToReadyQueue(process, pcb);
 					}
@@ -330,7 +343,7 @@ public class CPU extends Thread {
 						pcb.programCounter.setCyclesRan(0);
 						if (nextCommand.command.equals("CALCULATE")) {
 							if (status) {
-								System.out.println(process.getProcessName()
+								OS.info.setText(OS.info.getText() + "\n" + process.getProcessName()
 										+ " is on its last command and has been sent to the ready queue based on the next command");
 							}
 							Dispatcher.addToReadyQueue(process, pcb);
@@ -338,7 +351,7 @@ public class CPU extends Thread {
 							// break;
 						} else {
 							if (status) {
-								System.out.println(process.getProcessName()
+								OS.info.setText(OS.info.getText() + "\n" + process.getProcessName()
 										+ " is on its last command has been sent to the waiting queue");
 							}
 							Dispatcher.addToWaitingQueue(process, pcb);
@@ -370,14 +383,15 @@ public class CPU extends Thread {
 
 	}
 
-	public static void print() {
+	public void print() {
 
 		System.out.println("All processes:");
 		for (Process p : processes) {
 			double percentage = (((double) CPU.pcbList.get(p.getPID()).programCounter.getCommandCounter() - 1)
 					/ p.getCommands().size()) * 100;
-			System.out.println(p.getProcessName() + " " + percentage + "% completed");
-			System.out.println("     State: " + CPU.pcbList.get(p.getPID()).getState());
+			OS.info.setText(OS.info.getText() + "\n" + p.getProcessName() + " " + percentage + "% completed");
+			OS.info.setText(OS.info.getText() + "\n" + "     State: " + CPU.pcbList.get(p.getPID()).getState());
+
 		}
 	}
 
@@ -512,6 +526,11 @@ public class CPU extends Thread {
 
 	public static void updateComparePCBList(Process p, PCB pcb) {
 		comparePCBList.put(p.getPID(), pcb);
+
+	}
+
+	public void setSemaphore(Semaphore semaphore) {
+		this.semaphore = semaphore;
 
 	}
 

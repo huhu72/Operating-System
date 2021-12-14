@@ -56,7 +56,7 @@ public class Dispatcher {
 		return Dispatcher.readyQueue;
 	}
 
-	public static Process getProcess() {
+	public static synchronized Process getProcess() {
 		return Dispatcher.readyQueue.poll();
 		//System.out.println(processReturn.getProcessName() + " is being sent to the cpu to run");
 	}
@@ -78,7 +78,7 @@ public class Dispatcher {
 		return Dispatcher.waitingQueue;
 	}
 
-	public static Process getProcessFromWaitingQueue() {
+	public static synchronized Process getProcessFromWaitingQueue() {
 		Process processReturn = Dispatcher.waitingQueue.poll();
 	//	System.out.println(processReturn.getProcessName() + " is being sent to the cpu to run from the waiting queue");
 		return processReturn;
