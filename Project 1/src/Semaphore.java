@@ -11,8 +11,8 @@ public class Semaphore {
 		if (this.value < 0) {
 			this.list.add(P);
 			block(P);
-			// System.out.println(P.getProcessName() + "has been sent to the semaphore
-			// waiting queue since S < 0");
+			OS.info.setText(OS.info.getText() + "\n" + P.getProcessName()
+					+ "has been sent to the semaphore waiting queue since S < 0");
 		}
 	}
 

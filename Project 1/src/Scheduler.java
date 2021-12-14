@@ -58,8 +58,8 @@ public class Scheduler {
 	}
 
 	public void run(Process process) {
-		if (CPU.status)
-			OS.info.setText(OS.info.getText() + "\n" + "Starting a new timer for " + process.getProcessName());
+
+		OS.info.setText(OS.info.getText() + "\n" + "Starting a new timer for " + process.getProcessName());
 		quantumStatus = true;
 		timer = new Timer();
 		TimerTask tt = new TimerTask() {
@@ -77,9 +77,7 @@ public class Scheduler {
 
 	public void killQuantumTimer(Process process) {
 		timer.cancel();
-
-		if (CPU.status)
-			OS.info.setText(OS.info.getText() + "\n" + process.getProcessName() + " timer has been terminated");
+		OS.info.setText(OS.info.getText() + "\n" + process.getProcessName() + " timer has been terminated");
 	}
 
 	public static Queue<Process> sortSemaphoreWaitingQueue(Queue<Process> list) {

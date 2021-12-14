@@ -48,10 +48,9 @@ public class Process extends CPU implements Runnable {
 	static int memoryCount;
 	int memory;
 
-
 	Process(CPU cpu) {
-		this.cpu = cpu; 
-	
+		this.cpu = cpu;
+
 	}
 
 	Process(String processName, ArrayList<Command> commands, long pid, int critStart, int critEnd) {
@@ -71,15 +70,13 @@ public class Process extends CPU implements Runnable {
 	 * Auto-generated catch block e.printStackTrace(); } }
 	 */
 
-
 	public void createProcessesPrompt(int[] arguments) throws FileNotFoundException {
 		String command;
 		String argument;
-		String [] templates = {"cpubound.txt","iobased.txt","longbased.txt","shortbased.txt"};
-		for(int i = 0; i < templates.length; i++) {
-			createProcesses(templates[i], arguments[i]);	
+		String[] templates = { "cpubound.txt", "iobased.txt", "longbased.txt", "shortbased.txt" };
+		for (int i = 0; i < templates.length; i++) {
+			createProcesses(templates[i], arguments[i]);
 		}
-	
 
 	}
 
@@ -89,7 +86,7 @@ public class Process extends CPU implements Runnable {
 		System.out.println("Status [shows the current Status of the CPU]");
 		System.out.println("template [shows all the available templates]\n");
 		// getUserInput();
-	//	createProcessesPrompt();
+		// createProcessesPrompt();
 	}
 
 	private void createCommands(String templateName) throws FileNotFoundException {
@@ -123,34 +120,36 @@ public class Process extends CPU implements Runnable {
 	}
 
 	public void createProcesses(String templateName, long numProcessInput) throws FileNotFoundException {
-		// String templateLocation = "./Templates/" + templateName;
-		Process process;
-		int min = 1;
-		int max = 10;
-		int randomNum = (int) Math.floor(Math.random() * (max - min + 1) + min);
-		this.pid = 1;
-		for (int i = 0; i < numProcessInput; i++) {
-			createCommands(templateName);
-			process = new Process("Process" + processCreationCounter, getCommands(), (this.pid + this.pidCounter),
-					this.critStart, this.critEnd);
-			this.pidCounter++;
-			this.processCreationCounter++;
-			process.cpu = this.cpu;
-			if (randomNum == 1) {
-				Process childProcess = fork();
-				process.setChildPID(childProcess.getPID());
-			}
+		if (numProcessInput > 0) {
+			// String templateLocation = "./Templates/" + templateName;
+			Process process;
+			int min = 1;
+			int max = 10;
+			int randomNum = (int) Math.floor(Math.random() * (max - min + 1) + min);
+			this.pid = 1;
+			for (int i = 0; i < numProcessInput; i++) {
+				createCommands(templateName);
+				process = new Process("Process" + processCreationCounter, getCommands(), (this.pid + this.pidCounter),
+						this.critStart, this.critEnd);
+				this.pidCounter++;
+				this.processCreationCounter++;
+				process.cpu = this.cpu;
+				if (randomNum == 1) {
+					Process childProcess = fork();
+					process.setChildPID(childProcess.getPID());
+				}
 
-			this.cpu.addToProcessQueue(process);
-			PCB pcb = new PCB(process);
-			pcb.setChildPID(process.childPID);
-			CPU.updatePCBList(process, pcb);
-			memoryCount += process.memory;
-			if (memoryCount > TOTAL_MEMORY) {
-				Dispatcher.addToReadyQueue(process, pcb);
+				this.cpu.addToProcessQueue(process);
+				PCB pcb = new PCB(process);
+				pcb.setChildPID(process.childPID);
+				CPU.updatePCBList(process, pcb);
+				memoryCount += process.memory;
+				if (memoryCount > TOTAL_MEMORY) {
+					Dispatcher.addToReadyQueue(process, pcb);
+				}
 			}
 		}
-		
+
 	}
 
 	public void createCompareProcesses() throws FileNotFoundException {
@@ -198,8 +197,6 @@ public class Process extends CPU implements Runnable {
 	public ArrayList<Command> getCommands() {
 		return this.processCommands;
 	}
-
-
 
 	private int randomNum(int low, int high) {
 		return (int) ((Math.random() * (high - low)) + low);
@@ -257,7 +254,7 @@ public class Process extends CPU implements Runnable {
 
 	public void setCpu(CPU cpu) {
 		this.cpu = cpu;
-		
+
 	}
 
 }

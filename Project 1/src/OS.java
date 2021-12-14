@@ -7,6 +7,7 @@ import java.awt.Font;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 
 public class OS extends JFrame implements ActionListener {
@@ -18,8 +19,8 @@ public class OS extends JFrame implements ActionListener {
 	JTextPane ioBasedNum = new JTextPane();
 	JTextPane longBasedNum = new JTextPane();
 	JTextPane shortBasedNum = new JTextPane();
-	JButton statusBtn = new JButton("STATUS");
 	static JTextPane info = new JTextPane();
+	JScrollPane scroll = new JScrollPane(info);
 
 	OS() {
 		this.frame.setBounds(200, 200, 950, 360 * 2);
@@ -72,13 +73,8 @@ public class OS extends JFrame implements ActionListener {
 		runBtn.addActionListener(this);
 		frame.getContentPane().add(runBtn);
 
-		statusBtn.setBounds(30, 230, 100, 50);
-		statusBtn.addActionListener(this);
-		frame.getContentPane().add(statusBtn);
-
-		info.setBounds(200, 50, 700, 500);
-		info.setEditable(false);
-		frame.getContentPane().add(info);
+		scroll.setBounds(200, 50, 700, 500);
+		frame.getContentPane().add(scroll);
 
 	}
 
@@ -97,7 +93,6 @@ public class OS extends JFrame implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		Dispatcher dispatcher = new Dispatcher();
 		CPU cpu = new CPU();
 		CPU cpu2 = new CPU();
 
@@ -148,6 +143,8 @@ public class OS extends JFrame implements ActionListener {
 				CPU.scheduler = "RR";
 
 			}
+			cpu = new CPU();
+			p = new Process(cpu);
 
 			try {
 				p.createProcessesPrompt(templateNums);
@@ -158,7 +155,7 @@ public class OS extends JFrame implements ActionListener {
 			// statusThread.start();
 			Dispatcher.setPCBList(cpu.getPCBList());
 			Dispatcher.setReadyQueue(cpu.getJobQueue());
-		
+
 			Semaphore s1 = new Semaphore();
 			Semaphore s2 = new Semaphore();
 			cpu.setSemaphore(s1);
